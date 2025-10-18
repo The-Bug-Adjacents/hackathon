@@ -1,6 +1,10 @@
 import { useState } from "react";
+import { X } from "lucide-react";
 
 export default function ProfileModal({ isOpen, onClose, onSave }) {
+
+  const [error, setError] = useState(null);
+
   const [name, setName] = useState("");
   const [aiModel, setAiModel] = useState("");
   const [useCase, setUseCase] = useState("");
@@ -15,10 +19,48 @@ export default function ProfileModal({ isOpen, onClose, onSave }) {
   const [otherInstructions, setOtherInstructions] = useState("");
 
 
-  if (!isOpen) return null; // don't render when closed
+  const validate = () => {
+    if (!name) {
+        setError("name field must be filled out")
+        return false;
+    }
+    if (name.length > 25) {
+        setError("name must not be more than 25 characters")
+        return false;
+    }
+    if (!aiModel) {
+        setError("please select a model")
+        return false;
+    } 
+    if (!useCase) {
+        setError("please select a use case")
+        return false;
+    }     
+    switch (useCase) {
+        case "coding-assistance": {
+            if (!preferredLanguage && !commentingRules && !spacingInstruction && !otherInstructions) {
+                setError("must set at least one rule")
+                return false;
+            }
+            break;
+        }
+        case "documentation-creation": {
+            if (!targetAudience && !otherInstructions) {
+                setError("must set at least one rule")
+                return false;
+            }
+            break;
+        }
+    }
+    return true;
+  }
+
+
+  if (!isOpen) return null;
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    if (!validate()) {return}
     const newProfile = {
       userId: 0,
       name,
@@ -29,15 +71,35 @@ export default function ProfileModal({ isOpen, onClose, onSave }) {
       active: false,
     };
     onSave(newProfile);
+    handleClose();
+    onClose();
+  };
+
+  const handleClose = () => {
     setName("");
     setAiModel("");
     setUseCase("");
-    onClose();
-  };
+    setPreferredLanguage("")
+    setCommentingRules("")
+    setSpacingInstruction("")
+    setTargetAudience("")
+    setPreferredLanguage("")
+  }
 
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
       <div className="max-h-[85vh] overflow-y-auto bg-secondary border border-border rounded-2xl shadow-xl w-[90%] max-w-md p-6">
+        {error && (
+        <div className="flex items-center justify-between bg-destructive/15 border border-destructive text-destructive px-4 py-2 rounded-md mb-3 animate-in fade-in slide-in-from-top-2">
+          <span className="text-sm font-medium">Error: {error}</span>
+          <button
+            onClick={() => setError(null)}
+            className="p-1 rounded-md hover:bg-destructive/20 transition"
+          >
+            <X size={16} />
+          </button>
+        </div>
+      )}
         <h2 className="text-xl font-semibold text-foreground mb-4">Create New Ruleset</h2>
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
@@ -176,14 +238,17 @@ export default function ProfileModal({ isOpen, onClose, onSave }) {
           <div className="flex justify-end gap-2 mt-4">
             <button
               type="button"
-              onClick={onClose}
+              onClick={() => {
+                handleClose()
+                onClose()
+              }}
               className="px-4 py-2 rounded-lg bg-border hover:bg-border/80 transition text-foreground"
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="px-4 py-2 rounded-lg bg-foreground text-background font-medium hover:bg-foreground/90 transition"
+              className={`px-4 py-2 rounded-lg font-medium hover:bg-foreground/90 transition ${error ? "bg-transparent text-border disabled" : "bg-foreground text-background"}`}
             >
               Save
             </button>
