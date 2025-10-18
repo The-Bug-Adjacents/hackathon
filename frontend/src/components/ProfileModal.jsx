@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { X } from "lucide-react";
 
-export default function ProfileModal({ isOpen, onClose, onSave }) {
+export default function ProfileModal({title, isOpen, onClose, onSave }) {
 
   const [error, setError] = useState(null);
 
@@ -100,7 +100,7 @@ export default function ProfileModal({ isOpen, onClose, onSave }) {
           </button>
         </div>
       )}
-        <h2 className="text-xl font-semibold text-foreground mb-4">Create New Ruleset</h2>
+        <h2 className="text-xl font-semibold text-foreground mb-4">{title}</h2>
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           <label className="flex flex-col text-sm text-foreground">
