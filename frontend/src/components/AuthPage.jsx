@@ -20,7 +20,7 @@ export default function AuthPage() {
     const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (!username.trim() || !password.trim() || (!email.trim() && isSignup)) {
+    if (!email.trim() || !password.trim() || (!username.trim() && isSignup)) {
       setError("All fields required");
       return;
     }
