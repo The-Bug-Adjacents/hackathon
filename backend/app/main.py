@@ -57,7 +57,7 @@ def hello():
 def register(user: User):
     if user.email in users_db:
         raise HTTPException(status_code=400, detail="Email already registered")
-
+    
     hashed_pwd = hashed_password(user.password)
     users_db[user.email] = {
         "username": user.username,

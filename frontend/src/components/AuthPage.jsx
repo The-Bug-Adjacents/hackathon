@@ -8,6 +8,7 @@ import ProfileModal from "../components/ProfileModal";
 export default function AuthPage() {
   const { login, signup } = useAuth();
   const [isSignup, setIsSignup] = useState(false);
+  const [email, setEmail] = useState("");
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [showProfileModal, setShowProfileModal] = useState(false);
@@ -19,18 +20,18 @@ export default function AuthPage() {
     const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (!username.trim() || !password.trim()) {
-      setError("Username and password required");
+    if (!username.trim() || !password.trim() || (!email.trim() && isSignup)) {
+      setError("All fields required");
       return;
     }
     setLoading(true);
     try {
         if (isSignup) {
-           await signup(username, password);
+           await signup(email, username, password);
 
            setShowProfileModal(true)
         } else {
-           await login(username, password);
+           await login(email, password);
         }
     } catch (err) {
         setError(err.message);
@@ -60,12 +61,19 @@ export default function AuthPage() {
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           <input
+            type="email"
+            placeholder="Email"
+            className="border border-border bg-input p-2 rounded-md focus:ring-2 focus:ring-foreground/40"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+          />
+            {isSignup && <input
             type="text"
             placeholder="Username"
             className="border border-border bg-input p-2 rounded-md focus:ring-2 focus:ring-foreground/40"
             value={username}
             onChange={(e) => setUsername(e.target.value)}
-          />
+          />}
           <input
             type="password"
             placeholder="Password"

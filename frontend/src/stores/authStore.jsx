@@ -60,12 +60,13 @@ const login = async (username, password) => {
 };
 
 // signup helper
-const signup = async (username, password) => {
+const signup = async (email, username, password) => {
+ console.log( JSON.stringify({email, username, password }))
   try {
     const res = await fetch("/api/register", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ username, password }),
+      body: JSON.stringify({username, email, password }),
     });
 
     if (!res.ok) {
@@ -105,8 +106,8 @@ const signup = async (username, password) => {
   return (
     <AuthContext.Provider 
      value={{
-      token: user.token,
-      userId: user.userId,
+      token: user.token ?? "",
+      userId: user.userId ?? "",
       login,
       signup,
       logout,
