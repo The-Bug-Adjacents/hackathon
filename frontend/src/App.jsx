@@ -1,7 +1,10 @@
+import AuthPage from "./components/AuthPage";
+import Layout from "./components/Layout";
+import { useAuth } from './stores/authStore'
+
+
 export default function App() {
-  return (
-    <div className='flex h-screen items-center justify-center bg-gray-100'>
-      <h1 className='text-3xl font-bold text-blue-600'>Hackathon Project 🚀</h1>
-    </div>
-  )
+  const { token, userId } = useAuth();
+
+  return token && userId ? <Layout /> : <AuthPage />;
 }
