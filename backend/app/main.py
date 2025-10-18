@@ -22,7 +22,7 @@ class UserPublic(BaseModel):
     email: EmailStr
 
 class Token(BaseModel):
-    access_token: str
+    token: str
     # token_type: str
     id: str
 
@@ -53,7 +53,7 @@ def read_root():
 def hello():
     return {"message": "Hello from FastAPI 🚀"}
 
-@app.post("/register")
+@app.post("/register", response_model=Token)
 def register(user: User):
     if user.email in users_db:
         raise HTTPException(status_code=400, detail="Email already registered")
@@ -64,16 +64,17 @@ def register(user: User):
         "email": user.email,
         "hashed_pass": hashed_pwd
     }
-    return {"message": "Registered successfully!", "id": user.username}
+    access_token = create_access_token(data={"sub": user.email})
+    return {"id": user.username, "token": access_token}
 @app.post("/login", response_model=Token)
 def login(user_credentials: UserLogin):
     user_in_db = users_db.get(user_credentials.email)
     if not user_in_db or not verify_password(user_credentials.password, user_in_db["hashed_pass"]):
         raise HTTPException(status_code=401, detail="Invalid credentials")
     access_token = create_access_token(data={"sub": user_in_db["email"]})
-    return {"access_token": access_token, "id": user_in_db["username"]}
+    return {"token": access_token, "id": user_in_db["username"]}
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/login")
 
 def get_current_user(token: str = Depends(oauth2_scheme)):
     try:
