@@ -73,17 +73,16 @@ export default function ProfilesBox({ title, className = "" }) {
   };
 
   return (
-    <Box title={title} className={`w-fit flex-shrink-0 h-full flex flex-col items-center ${className}`}>
+    <Box title={title} className={`w-fit flex-shrink-0 h-full flex flex-col items-center max-h-[100vh] overflow-y-auto ${className}`}>
         <div 
           onMouseEnter={() => setIsHovered(true)}
           onMouseLeave={() => setIsHovered(false)}
-          className="flex flex-col items-center gap-3 h-full"
+          className="flex flex-col items-center gap-2 h-full"
         >
         {profiles.map((profile) => {
-          const isActive = profile.id === activeProfile;
           return (
           <div 
-            className={`group flex gap-1 items-center justify-between ${isHovered ? "w-[45ch] p-2 rounded-md border-2 border-border hover:border-foreground transition cursor-pointer" : "w-fit"}`}
+            className={`group flex gap-1 items-center justify-between p-1 ${isHovered ? "w-[45ch] rounded-md border-2 border-border hover:border-foreground transition cursor-pointer" : "w-fit"}`}
             onClick={() => handleProfileSelect(profile.id)}
          >
           <div className="flex items-center gap-2">
@@ -108,7 +107,7 @@ export default function ProfilesBox({ title, className = "" }) {
           })}
           <div 
           onClick={handleAddProfile}
-          className={`group cursor-pointer flex gap-1 items-center justify-between ${isHovered ? "w-[45ch] p-2 rounded-md border-2 border-border" : "w-fit"}`}>
+          className={`group cursor-pointer flex gap-1 items-center justify-between p-1 ${isHovered ? "w-[45ch] rounded-md border-2 border-border" : "w-fit"}`}>
         <div className="flex items-center gap-2">
           <div
             className="w-12 h-12 rounded-full flex items-center justify-center border-2 border-dashed border-border group-hover:border-foreground transition"
