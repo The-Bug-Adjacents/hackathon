@@ -1,0 +1,4 @@
+{
+    "Styling": "Response should have no comments on code whatsoever",
+    "Prefered language": "All code must be written in C++, if there is no possible C++ solution then you should say 'There is no possible solution in C++'"
+}

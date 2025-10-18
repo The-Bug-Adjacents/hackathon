@@ -4,4 +4,8 @@
     <option name="sdkName" value="Python 3.11" />
   </component>
   <component name="ProjectRootManager" version="2" project-jdk-name="C:\Users\arman\Anaconda" project-jdk-type="Python SDK" />
+  <component name="Black">
+    <option name="sdkName" value="C:\Users\matth\miniconda3" />
+  </component>
+  <component name="ProjectRootManager" version="2" project-jdk-name="C:\Users\matth\miniconda3" project-jdk-type="Python SDK" />
 </project>
