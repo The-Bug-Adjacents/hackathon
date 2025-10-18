@@ -4,7 +4,7 @@ import { useAuth } from './stores/authStore'
 
 
 export default function App() {
-  const { user } = useAuth();
+  const { token, userId } = useAuth();
 
-  return user ? <Layout /> : <AuthPage />;
+  return token && userId ? <Layout /> : <AuthPage />;
 }

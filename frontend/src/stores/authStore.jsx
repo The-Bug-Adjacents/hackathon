@@ -105,8 +105,8 @@ const signup = async (username, password) => {
   return (
     <AuthContext.Provider 
      value={{
-      token: auth.token,
-      userId: auth.userId,
+      token: user.token,
+      userId: user.userId,
       login,
       signup,
       logout,
