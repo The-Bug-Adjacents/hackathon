@@ -122,7 +122,7 @@ export default function ProfilesBox({ title, className = "" }) {
             }
         </div>
         </div>
-        <ProfileModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} onSave={handleSaveProfile}/>
+        <ProfileModal title={"Create New Profile"} isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} onSave={handleSaveProfile}/>
     </Box>
   );
 }
