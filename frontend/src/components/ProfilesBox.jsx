@@ -1,7 +1,8 @@
 import Box from "./Box";
-import { MoreVertical, Plus } from "lucide-react"; // You can install lucide-react for clean icons
+import { Plus } from "lucide-react"; // You can install lucide-react for clean icons
 import { useState } from "react";
 import ProfileModal from "./ProfileModal";
+import ProfileMenu from "./ProfileMenu";
 
 
 const usedNames = new Set();
@@ -24,24 +25,25 @@ export default function ProfilesBox({ title, className = "" }) {
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
+  const [activeProfile, setActiveProfile] = useState("");
   const [profiles, setProfiles] = useState(() => {
     // if you'll load from an API later, you can replace this with a fetch
-    const initialProfiles = [
+  const initialProfiles = [
     {
       id: "12sas2",
       name: "hyperion code assitant",
       aName: "",
       model: "hyperion",
-      active: true
     },
     {
       id: "12sas3",
       name: "hermes documentation creator",
       aName: "",
       model: "hermes",
-      active: false
     },
     ];
+
+    setActiveProfile(initialProfiles[0].id ?? "");
     // generate names only once
     return initialProfiles.map(p => ({
       ...p,
@@ -51,14 +53,8 @@ export default function ProfilesBox({ title, className = "" }) {
 
 
 
-  const handleProfileSelect = (e) => {
-    console.log(profiles);
-    let id = e.target.id;
-    const updatedProfiles = profiles.map((p) =>
-      p.id === id ? { ...p, active: true } : { ...p, active: false }
-    );
-    setProfiles(updatedProfiles);
-  }
+  const handleProfileSelect = (id) => setActiveProfile(id);
+  
   
   const handleAddProfile = () => setIsModalOpen(true);
 
@@ -70,7 +66,6 @@ export default function ProfilesBox({ title, className = "" }) {
         name: newProfile.name,
         aName: generateAvatarText(newProfile.name),
         model: newProfile.Model,
-        active: false
       }]);
     } catch (error) {
       console.error("Failed to save profile:", error);
@@ -84,41 +79,43 @@ export default function ProfilesBox({ title, className = "" }) {
           onMouseLeave={() => setIsHovered(false)}
           className="flex flex-col items-center gap-3 h-full"
         >
-        {profiles.map((profile) => (
-          <div className={`flex gap-1 items-center justify-between ${isHovered ? "w-[45ch] p-2 rounded-md border-2 border-border" : "w-fit"}`}>
-            <button
+        {profiles.map((profile) => {
+          const isActive = profile.id === activeProfile;
+          return (
+          <div 
+            className={`group flex gap-1 items-center justify-between ${isHovered ? "w-[45ch] p-2 rounded-md border-2 border-border hover:border-foreground transition cursor-pointer" : "w-fit"}`}
+            onClick={() => handleProfileSelect(profile.id)}
+         >
+          <div className="flex items-center gap-2">
+            <div
               key={profile.id}
               id={profile.id}
-              onClick={handleProfileSelect}
-              className={`w-12 h-12 rounded-full overflow-hidden border-2 border-border ${profile.active ? "border-dashed border-foreground hover:border-solid transition" : "hover:border-foreground transition"}`}
+              className={`w-12 h-12 rounded-full overflow-hidden border-2 border-border  flex items-center justify-center ${activeProfile === profile.id ? "border-dashed border-foreground group-hover:border-solid transition" : "group-hover:border-foreground transition"}`}
             >
               {profile.aName}
-            </button>
+            </div>
+          </div>
             {isHovered &&
             <div className="flex gap-2 justify-between w-[30ch] items-center">
               <span className="text-sm font-medium leading-none align-middle">{profile.name}</span>
-              <button
-                onClick={(e) => {
-                    e.stopPropagation();
-                    // open profile settings / modal
-                    console.log("Edit/View Rules:", profile.id);
-                  }}
-                  className="flex items-center justify-center w-8 h-8 rounded-full text-foreground/50 hover:bg-border transition"
-                >
-                  <MoreVertical size={16} strokeWidth={2}/>
-              </button>
+              {open && (
+                <ProfileMenu onDelete={()=>{}} onEdit={()=>{}} onView={()=>{}}/>
+              )}
             </div> 
             }
           </div>
-        ))}
-          <div className={`flex gap-1 items-center justify-between ${isHovered ? "w-[45ch] p-2 rounded-md border-2 border-border" : "w-fit"}`}>
-        
-        <button
+          )
+          })}
+          <div 
           onClick={handleAddProfile}
-          className="w-12 h-12 rounded-full flex items-center justify-center border-2 border-dashed border-border hover:border-foreground transition"
-        >
-          <Plus />
-        </button>
+          className={`group cursor-pointer flex gap-1 items-center justify-between ${isHovered ? "w-[45ch] p-2 rounded-md border-2 border-border" : "w-fit"}`}>
+        <div className="flex items-center gap-2">
+          <div
+            className="w-12 h-12 rounded-full flex items-center justify-center border-2 border-dashed border-border group-hover:border-foreground transition"
+          >
+            <Plus />
+          </div>
+        </div>
         {isHovered &&
             <div className="flex gap-2 justify-between w-[30ch] items-center">
               <span className="text-sm p-0 m-0 font-medium truncate leading-none align-middle">Add a new profile</span>
