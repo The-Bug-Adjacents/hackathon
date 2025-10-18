@@ -82,7 +82,7 @@ export default function ProfilesBox({ title, className = "" }) {
         <div 
           onMouseEnter={() => setIsHovered(true)}
           onMouseLeave={() => setIsHovered(false)}
-          className="flex flex-col items-center gap-3"
+          className="flex flex-col items-center gap-3 h-full"
         >
         {profiles.map((profile) => (
           <div className={`flex gap-1 items-center justify-between ${isHovered ? "w-[45ch] p-2 rounded-md border-2 border-border" : "w-fit"}`}>
@@ -96,7 +96,7 @@ export default function ProfilesBox({ title, className = "" }) {
             </button>
             {isHovered &&
             <div className="flex gap-2 justify-between w-[30ch] items-center">
-              <span className="text-sm p-0 m-0 font-medium truncate leading-none align-middle">{profile.name}</span>
+              <span className="text-sm font-medium leading-none align-middle">{profile.name}</span>
               <button
                 onClick={(e) => {
                     e.stopPropagation();
