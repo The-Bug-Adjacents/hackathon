@@ -5,9 +5,8 @@ const AuthContext = createContext();
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(() => {
-    // Load stored user from localStorage
     const saved = localStorage.getItem("user");
-    return saved ? JSON.parse(saved) : null;
+    return saved ? JSON.parse(saved) : { token: null, userId: null };
   });
   
     useEffect(() => {
@@ -25,7 +24,7 @@ export function AuthProvider({ children }) {
 
   // Save user to localStorage whenever it changes
   useEffect(() => {
-    if (user) {
+    if (user?.token && user?.userId) {
       localStorage.setItem("user", JSON.stringify(user));
     } else {
       localStorage.removeItem("user");
@@ -53,6 +52,7 @@ const login = async (username, password) => {
     }
 
     const data = await res.json();
+    if (!data.token || !data.id) throw new Error("Invalid response from server.");
     setUser(data);
   } catch (err) {
     throw new Error(err.message || "Unexpected error during login.");
@@ -79,16 +79,39 @@ const signup = async (username, password) => {
     }
 
     const data = await res.json();
+    if (!data.token || !data.id) throw new Error("Invalid response from server.");
     setUser(data);
   } catch (err) {
     throw new Error(err.message || "Unexpected error during signup.");
   }
 };
 
-  const logout = () => setUser(null);
+  const logout = () => setUser({token: null, id: null});
+
+  // --- Helper for authorized requests --- //
+  const authorizedFetch = async (url, options = {}) => {
+    if (!auth.token) throw new Error("Not authenticated");
+    const res = await fetch(url, {
+      ...options,
+      headers: {
+        ...(options.headers || {}),
+        "Authorization": `Bearer ${auth.token}`,
+        "Content-Type": "application/json",
+      },
+    });
+    return res;
+  };
 
   return (
-    <AuthContext.Provider value={{ user, login, signup, logout }}>
+    <AuthContext.Provider 
+     value={{
+      token: auth.token,
+      userId: auth.userId,
+      login,
+      signup,
+      logout,
+      authorizedFetch,
+     }}>
       {children}
     </AuthContext.Provider>
   );
