@@ -32,12 +32,12 @@ export function AuthProvider({ children }) {
   }, [user]);
 
   // Simple auth helpers
-const login = async (username, password) => {
+const login = async (email, password) => {
   try {
     const res = await fetch("/api/login", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ username, password }),
+      body: JSON.stringify({ email, password }),
     });
 
     if (!res.ok) {
@@ -46,26 +46,27 @@ const login = async (username, password) => {
       if (res.status === 500) message = "Server error. Please try again later.";
       else {
         const data = await res.json().catch(() => null);
-        message = data?.error || "Invalid username or password.";
+        message = data?.error || "Invalid email or password.";
       }
       throw new Error(message);
     }
 
     const data = await res.json();
     if (!data.token || !data.id) throw new Error("Invalid response from server.");
-    setUser(data);
+    setUser({token: data.token, userId:data.id});
   } catch (err) {
     throw new Error(err.message || "Unexpected error during login.");
   }
 };
 
 // signup helper
-const signup = async (username, password) => {
+const signup = async (email, username, password) => {
+ console.log( JSON.stringify({email, username, password }))
   try {
     const res = await fetch("/api/register", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ username, password }),
+      body: JSON.stringify({username, email, password }),
     });
 
     if (!res.ok) {
@@ -80,7 +81,7 @@ const signup = async (username, password) => {
 
     const data = await res.json();
     if (!data.token || !data.id) throw new Error("Invalid response from server.");
-    setUser(data);
+    setUser({token: data.token, userId:data.id});
   } catch (err) {
     throw new Error(err.message || "Unexpected error during signup.");
   }
@@ -105,8 +106,8 @@ const signup = async (username, password) => {
   return (
     <AuthContext.Provider 
      value={{
-      token: user.token,
-      userId: user.userId,
+      token: user.token ?? "",
+      userId: user.userId ?? "",
       login,
       signup,
       logout,
