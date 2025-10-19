@@ -22,7 +22,7 @@ function generateAvatarText(name) {
   return variant;
 }
 
-export default function ProfilesBox({ profiles, activeProfile, onSelectProfile, onProfilesChange, title, className = "" }) {
+export default function ProfilesBox({ profiles, noProfiles, activeProfile, onSelectProfile, onProfilesChange, title, className = "" }) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
   const [avatarPs, setAvatarPs] = useState(() => {
@@ -51,6 +51,25 @@ export default function ProfilesBox({ profiles, activeProfile, onSelectProfile, 
       setAvatarPs(withAvatars);
     }
   }, [profiles]);
+
+    useEffect(() => {
+            console.log("INSIDE THE EFFECT")
+            console.log(profiles.length)
+            console.log(noProfiles)
+
+    if (profiles?.length && !noProfiles) {
+            console.log("INSIDE THE INSIDE EFFECT")
+
+      console.log(profiles)
+      const withAvatars = profiles.map((p) => ({
+        
+        id: p.profileId,
+        name: p.profileName,
+        aName: p.aName || generateAvatarText(p.profileName),
+      }));
+      setAvatarPs(withAvatars);
+    }
+  }, [noProfiles]);
 
   const handleAddProfile = () => setIsModalOpen(true);
 
@@ -91,7 +110,7 @@ export default function ProfilesBox({ profiles, activeProfile, onSelectProfile, 
 
     // Step 6: Optionally select the new profile immediately
     if (typeof onSelectProfile === "function") {
-      onSelectProfile(profileWithAvatar.id);
+      onSelectProfile(data.profileId, data.chatlogId);
     }
 
     setIsModalOpen(false);
