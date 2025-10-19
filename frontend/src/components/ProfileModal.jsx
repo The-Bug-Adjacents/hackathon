@@ -1,7 +1,9 @@
 import { useState } from "react";
+import { useAuth } from "../stores/authStore";
 import { X } from "lucide-react";
 
 export default function ProfileModal({title, isOpen, onClose, onSave }) {
+  const { token, userId } = useAuth();
 
   const [error, setError] = useState(null);
 
@@ -18,18 +20,8 @@ export default function ProfileModal({title, isOpen, onClose, onSave }) {
 
   const [otherInstructions, setOtherInstructions] = useState("");
 
-// shared header block
-  const header = `
-  SYSTEM CONTEXT
-  - Operator: ${name || "User"}
-  - Model: ${aiModel || "unspecified"}
-  - Use Case: ${useCase || "general"}
-  `.trim();
-
   // earlier, more detailed CODE template
-  const aiRulesPrompt = `
-  ${header}
-
+  const aiCodingAssist = `
   You are an AI code assistant. Follow these rules exactly when generating or editing code:
 
   1. Preferred Language
@@ -55,7 +47,7 @@ export default function ProfileModal({title, isOpen, onClose, onSave }) {
 
   // earlier, more detailed DOCUMENT template
   const aiDocumentPrompt = `
-  ${header}
+
 
   You are an AI writing assistant. Follow these rules exactly when creating or editing documents:
 
@@ -91,50 +83,14 @@ export default function ProfileModal({title, isOpen, onClose, onSave }) {
     - ${otherInstructions || "No additional special instructions."}
   `.trim();
 
-  const buildPromptForUseCase = () => {
-    if (useCase === "coding-assistance") {
-      return `
-${header}
-
-You are an AI code assistant. Follow these rules:
-
-1) Preferred Language
-   - ${preferredLanguage || "the user’s chosen language"}
-
-2) Commenting Rules
-   - ${commentingRules || "Provide concise, meaningful comments explaining logic and purpose."}
-
-3) Spacing Instructions
-   - ${spacingInstruction || "Use standard indentation (e.g., 2–4 spaces) and clean whitespace."}
-
-4) Other Instructions (default)
-   - ${otherInstructions || "No additional special instructions."}
-`.trim();
-    }
-
-    // documentation-creation
-    return `
-${header}
-
-You are an AI writing assistant. Follow these rules:
-
-1) Target Audience
-   - ${targetAudience || "a general audience"}
-
-2) Other Instructions (default)
-   - ${otherInstructions || "No additional special instructions."}
-`.trim();
-  };
-
-
 
   const validate = () => {
     if (!name) {
         setError("name field must be filled out")
         return false;
     }
-    if (name.length > 25) {
-        setError("name must not be more than 25 characters")
+    if (name.length > 20) {
+        setError("name can be no more than 20 characters")
         return false;
     }
     if (!aiModel) {
@@ -170,15 +126,42 @@ You are an AI writing assistant. Follow these rules:
   const handleSubmit = (e) => {
     e.preventDefault();
     if (!validate()) {return}
-    const newProfile = {
-      userId: 0,
-      name,
-      Model: aiModel,
-      RuleSet: {
-        UseCase: useCase,
-      },
-      active: false,
-    };
+    let newProfile;
+    if (useCase === "coding-assistance") {
+      newProfile = {
+        userId: userId,
+        profileName: name,
+        model: aiModel,
+        ruleset: {
+          preferredLanguage: preferredLanguage,
+          spacingInstruction: spacingInstruction,
+          commentingRules: commentingRules,
+          otherInstructions: otherInstructions,
+          rule: aiCodingAssist
+        },
+      };
+  } else if (useCase === "documentation-creation") {
+      newProfile = {
+        userId: userId,
+        profileName: name,
+        model: aiModel,
+        ruleset: {
+          targetAudience: targetAudience,
+          otherInstructions: otherInstructions,
+          rule: aiCodingAssist
+        },
+      };
+  } else {
+      newProfile = {
+        userId: userId,
+        profileName: name,
+        model: aiModel,
+        ruleset: {
+          otherInstructions: otherInstructions,
+          rule: aiCodingAssist
+        },
+      };
+  }
     onSave(newProfile);
     handleClose();
     onClose();

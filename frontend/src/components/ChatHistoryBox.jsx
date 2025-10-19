@@ -9,7 +9,7 @@ const defaultChats = [
   { id: "chat-2", title: "Preferences" },
 ];
 
-export default function ChatHistoryBox({ title, chats, activeChat, onSelectChat, className }) {
+export default function ChatHistoryBox({ title, className = "" }) {
   const [chats, setChats] = useState(() => {
     const savedChats = localStorage.getItem(CHAT_LIST_KEY);
     return savedChats ? JSON.parse(savedChats) : defaultChats;

@@ -7,7 +7,7 @@ import { useState, useEffect } from "react";
 
 
 export default function Layout() {
-  const { token, userId } = useAuth();
+  const { userId, authorizedFetch } = useAuth();
   
   const [profiles, setProfiles] = useState([])
   const [activeProfile, setActiveProfile] = useState(() => localStorage.getItem("activeProfile"))
@@ -21,20 +21,32 @@ export default function Layout() {
   }, [])
 
   const fetchProfiles = async () => {
-    const res = await fetch(`http://127.0.0.1:8000/profiles/${userId}`)
+    const res = await authorizedFetch(`/api/profiles/${userId}`)
     const data = await res.json()
-    setProfiles(data)
+   if (!Array.isArray(data.profiles)) {
+    setProfiles([])
+    return
+  }
+    setProfiles(data.profiles)
   }
 
   const fetchChats = async (profileId) => {
-    const res = await fetch(`http://127.0.0.1:8000/chats/${userId}/${profileId}`)
+    const res = await authorizedFetch(`/api/chats/${userId}/${profileId}`)
     const data = await res.json()
+    if (!Array.isArray(data)) {
+    setChats([])
+    return
+  }
     setChats(data)
   }
 
   const fetchMessages = async (chatId) => {
-    const res = await fetch(`http://127.0.0.1:8000/chat/${userId}/${activeProfile}/${chatId}/messages`)
+    const res = await authorizedFetch(`/api/chat/${userId}/${activeProfile}/${chatId}/messages`)
     const data = await res.json()
+    if (!Array.isArray(data)) {
+    setMessages([])
+    return
+  }
     setMessages(data)
   }
 
@@ -62,7 +74,9 @@ export default function Layout() {
        profiles={profiles}
        activeProfile={activeProfile}
        onSelectProfile={handleProfileSelect}
-       onProfilesChange={setProfiles}
+       onProfilesChange={(newProfile) =>
+          setProfiles((prev = []) => [...prev, newProfile])
+        }
        />
       {activeProfile && (
         <ChatHistoryBox

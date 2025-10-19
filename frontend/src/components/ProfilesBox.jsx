@@ -1,4 +1,6 @@
 import { useEffect, useState } from "react";
+import { useAuth } from "../stores/authStore";
+
 import { Plus } from "lucide-react";
 import Box from "./Box";
 import ProfileModal from "./ProfileModal";
@@ -23,14 +25,26 @@ function generateAvatarText(name) {
 export default function ProfilesBox({ profiles, activeProfile, onSelectProfile, onProfilesChange, title, className = "" }) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
-  const [avatarPs, setAvatarPs] = useState([]);
+  const [avatarPs, setAvatarPs] = useState(() => {
+      if (profiles?.length) {
+        return profiles.map((p) => ({
+          id: p.profileId,
+          name: p.profileName,
+          aName: p.aName || generateAvatarText(p.profileName),
+        }));
+      } else {
+        return [];
+      }
+  });
+  const { authorizedFetch } = useAuth();
 
   // 🧠 Whenever profiles prop changes (like after fetch), rebuild avatar list
   useEffect(() => {
     if (profiles?.length) {
       const withAvatars = profiles.map((p) => ({
-        ...p,
-        aName: p.aName || generateAvatarText(p.name),
+        id: p.profileId,
+        name: p.profileName,
+        aName: p.aName || generateAvatarText(p.profileName),
       }));
       setAvatarPs(withAvatars);
     }
@@ -41,7 +55,7 @@ export default function ProfilesBox({ profiles, activeProfile, onSelectProfile, 
   const handleSaveProfile = async (newProfile) => {
   try {
     // Step 1: Send new profile to backend
-    const res = await authorizedFetch(`/rules`, {
+    const res = await authorizedFetch(`/api/rules`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(newProfile),
@@ -52,20 +66,25 @@ export default function ProfilesBox({ profiles, activeProfile, onSelectProfile, 
     }
 
     // Step 2: Parse backend response (which should include the real id)
-    const savedProfile = await res.json();
+    const data = await res.json();
 
     // Step 3: Add avatar name locally
     const profileWithAvatar = {
-      ...savedProfile,
-      aName: generateAvatarText(savedProfile.name),
+      id: data.profileId,
+      name: newProfile.name,
+      aName: generateAvatarText(newProfile.profileName),
     };
 
     // Step 4: Update this component’s state
     setAvatarPs((prev) => [...prev, profileWithAvatar]);
 
+    newProfile = {
+      id: data.profileId,
+      ...newProfile
+    }
     // Step 5: Update Layout’s global profile list
     if (typeof onProfilesChange === "function") {
-      onProfilesChange((prev) => [...prev, profileWithAvatar]);
+      onProfilesChange(newProfile);
     }
 
     // Step 6: Optionally select the new profile immediately
@@ -76,7 +95,7 @@ export default function ProfilesBox({ profiles, activeProfile, onSelectProfile, 
     setIsModalOpen(false);
   } catch (error) {
     console.error("Failed to save profile:", error);
-    setError("Error adding new profile. Please try again.");
+    // setError("Error adding new profile. Please try again.");
   }
 };
 
@@ -95,7 +114,7 @@ export default function ProfilesBox({ profiles, activeProfile, onSelectProfile, 
             key={profile.id}
             className={`group flex gap-1 items-center justify-between p-1 ${
               isHovered
-                ? "w-[45ch] rounded-md border-2 border-border hover:border-foreground transition cursor-pointer"
+                ? "w-[35ch] rounded-md border-2 border-border hover:border-foreground transition cursor-pointer"
                 : "w-fit"
             }`}
             onClick={() => onSelectProfile(profile.id)}
@@ -113,7 +132,7 @@ export default function ProfilesBox({ profiles, activeProfile, onSelectProfile, 
               </div>
             </div>
             {isHovered && (
-              <div className="flex gap-2 justify-between w-[30ch] items-center">
+              <div className="flex gap-2 justify-between w-[25ch] items-center">
                 <span className="text-sm font-medium leading-none align-middle">
                   {profile.name}
                 </span>
@@ -128,7 +147,7 @@ export default function ProfilesBox({ profiles, activeProfile, onSelectProfile, 
         <div
           onClick={handleAddProfile}
           className={`group cursor-pointer flex gap-1 items-center justify-between p-1 ${
-            isHovered ? "w-[45ch] rounded-md border-2 border-border" : "w-fit"
+            isHovered ? "w-[35ch] rounded-md border-2 border-border" : "w-fit"
           }`}
         >
           <div className="flex items-center gap-2">

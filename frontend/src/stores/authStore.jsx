@@ -91,12 +91,12 @@ const signup = async (email, username, password) => {
 
   // --- Helper for authorized requests --- //
   const authorizedFetch = async (url, options = {}) => {
-    if (!auth.token) throw new Error("Not authenticated");
+    if (!user.token) throw new Error("Not authenticated");
     const res = await fetch(url, {
       ...options,
       headers: {
         ...(options.headers || {}),
-        "Authorization": `Bearer ${auth.token}`,
+        "Authorization": `Bearer ${user.token}`,
         "Content-Type": "application/json",
       },
     });
