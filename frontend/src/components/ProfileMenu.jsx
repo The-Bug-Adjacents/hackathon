@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { MoreVertical } from "lucide-react";
 
-export default function ProfileMenu({ onView, onEdit, onDelete }) {
+export default function ProfileMenu({ onView }) {
   const [open, setOpen] = useState(false);
   const ref = useRef(null);
 
@@ -33,7 +33,7 @@ export default function ProfileMenu({ onView, onEdit, onDelete }) {
           >
             View Rules
           </button>
-          <button
+          {/* <button
             onClick={onEdit}
             className="w-full text-left px-3 py-2 text-sm text-foreground hover:bg-border"
           >
@@ -44,7 +44,7 @@ export default function ProfileMenu({ onView, onEdit, onDelete }) {
             className="w-full text-left px-3 py-2 text-sm text-destructive hover:bg-border"
           >
             Delete
-          </button>
+          </button> */}
         </div>
       )}
     </div>

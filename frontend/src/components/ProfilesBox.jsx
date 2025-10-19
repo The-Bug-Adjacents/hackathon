@@ -5,6 +5,7 @@ import { Plus } from "lucide-react";
 import Box from "./Box";
 import ProfileModal from "./ProfileModal";
 import ProfileMenu from "./ProfileMenu";
+import ProfileViewModal from "./ProfileViewModal";
 
 const usedNames = new Set();
 
@@ -24,6 +25,11 @@ function generateAvatarText(name) {
 
 export default function ProfilesBox({ profiles, noProfiles, activeProfile, onSelectProfile, onProfilesChange, title, className = "" }) {
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [profileViewModalOpts, setProfileViewModalOpts] = useState({
+    open: false,
+    profileName: "",
+    profileId: ""
+  });
   const [isHovered, setIsHovered] = useState(false);
   const [avatarPs, setAvatarPs] = useState(() => {
       if (profiles?.length) {
@@ -158,7 +164,13 @@ export default function ProfilesBox({ profiles, noProfiles, activeProfile, onSel
                   {profile.name}
                 </span>
                 {/* optional menu */}
-                {/* <ProfileMenu onDelete={() => {}} onEdit={() => {}} onView={() => {}} /> */}
+                <ProfileMenu onView={() => {
+                  setProfileViewModalOpts({
+                    open: true,
+                    profileId: profile.id.toString(),
+                    profileName: profile.name
+                  })
+                }} />
               </div>
             )}
           </div>
@@ -192,6 +204,16 @@ export default function ProfilesBox({ profiles, noProfiles, activeProfile, onSel
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         onSave={handleSaveProfile}
+      />
+      <ProfileViewModal
+        title={profileViewModalOpts.profileName}
+        onClose={() => setProfileViewModalOpts({
+          open: false,
+          profileName: "",
+          profileId: ""
+        })}
+        isOpen={profileViewModalOpts.open}
+        profileId={profileViewModalOpts.profileId}
       />
     </Box>
   );
