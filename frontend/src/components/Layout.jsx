@@ -119,7 +119,13 @@ export default function Layout() {
             setChats((prev = []) => [...prev, chat])
           }
           onChatsDelete={(chat) =>
-            setChats([...chats.filter(c => c !== chat)])
+          {  
+            setChats(prev => prev.filter(c => c !== chat));
+            if (activeChat === chat.toString()) {
+              const remaining = chats.filter(c => c !== chat);
+              const nextChat = remaining.length ? remaining[0] : null;
+              handleChatSelect(nextChat);
+            }}          
           }
         />
       )}

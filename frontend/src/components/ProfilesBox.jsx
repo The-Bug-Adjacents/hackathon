@@ -47,7 +47,6 @@ export default function ProfilesBox({ profiles, noProfiles, activeProfile, onSel
   // 🧠 Whenever profiles prop changes (like after fetch), rebuild avatar list
   useEffect(() => {
     if (profiles?.length) {
-      console.log(profiles)
       const withAvatars = profiles.map((p) => ({
         
         id: p.profileId,
@@ -59,14 +58,7 @@ export default function ProfilesBox({ profiles, noProfiles, activeProfile, onSel
   }, [profiles]);
 
     useEffect(() => {
-            console.log("INSIDE THE EFFECT")
-            console.log(profiles.length)
-            console.log(noProfiles)
-
     if (profiles?.length && !noProfiles) {
-            console.log("INSIDE THE INSIDE EFFECT")
-
-      console.log(profiles)
       const withAvatars = profiles.map((p) => ({
         
         id: p.profileId,

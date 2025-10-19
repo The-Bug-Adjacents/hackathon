@@ -1,7 +1,0 @@
-{
-    "preferredLanguage": "Python",
-    "spacingInstruction": "",
-    "commentingRules": "DOnt comment at all",
-    "otherInstructions": "Use the least amount of code at all",
-    "rule": "You are an AI code assistant. Follow these rules exactly when generating or editing code:\n\n  1. Preferred Language\n    - All responses must be in Python.\n    - Do not include code snippets in any other language unless specifically requested.\n\n  2. Commenting Rules\n    - DOnt comment at all\n    - Comments must maintain consistency with each other and match the tone of the codebase.\n\n  3. Spacing & Formatting Instructions\n    - Follow standard formatting conventions if the user has not specified rules(2 or 4 spaces per indent, one blank line between functions)\n    - Ensure the final code is high quality and clear.\n\n  4. Output Rules\n    - Only return answers related to the users prompt.\n    - Follow all style and formatting rules defined above.\n\n  5. Other Instructions (override/extend as needed)\n    - Use the least amount of code at all"
-}

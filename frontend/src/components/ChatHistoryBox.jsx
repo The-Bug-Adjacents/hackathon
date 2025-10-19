@@ -16,13 +16,8 @@ export default function ChatHistoryBox({ title, activeProfileId, chats, onChatsC
     if (!res.ok) {
       throw new Error(`Failed to save profile: ${res.status}`);
     }
-
       setConfirmingDeleteId(null);
-      if(activeChat === idToDelete){
-        onSelectChat(chats.length > 1 ? chats.find(c => c !== idToDelete) : null);
-      }
       onChatsDelete(idToDelete)
-
     } catch (error) {
     console.error("Failed to save profile:", error);
     // setError("Error adding new profile. Please try again.");
@@ -93,7 +88,10 @@ export default function ChatHistoryBox({ title, activeProfileId, chats, onChatsC
                 {isConfirmingDelete ? (
                   // --- RENDER CONFIRMATION BUTTONS ---
                   <div className="flex items-center gap-2 text-sm">
-                    <button onClick={() => handleConfirmDelete(chat)} className="px-2 py-0.5 rounded hover:bg-destructive hover:text-destructive-foreground">Yes</button>
+                    <button onClick={(e) => {
+                      e.stopPropagation()
+                      handleConfirmDelete(chat)
+                      }} className="px-2 py-0.5 rounded hover:bg-destructive hover:text-destructive-foreground">Yes</button>
                     <button onClick={(e) => { e.stopPropagation(); setConfirmingDeleteId(null); }} className="px-2 py-0.5 rounded hover:bg-muted">No</button>
                   </div>
                 ) : (
