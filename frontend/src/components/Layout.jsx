@@ -33,11 +33,12 @@ export default function Layout() {
   const fetchChats = async (profileId) => {
     const res = await authorizedFetch(`/api/chats/${userId}/${profileId}`)
     const data = await res.json()
-    if (!Array.isArray(data)) {
+    console.log(data)
+    if (!Array.isArray(data.chatlogIds)) {
     setChats([])
     return
   }
-    setChats(data)
+    setChats(data.chatlogIds)
   }
 
   const fetchMessages = async (chatId) => {
@@ -78,15 +79,22 @@ export default function Layout() {
           setProfiles((prev = []) => [...prev, newProfile])
         }
        />
-      {activeProfile && (
+      {activeProfile != null &&(
         <ChatHistoryBox
           title={"Chat History"}
           chats={chats}
           activeChat={activeChat}
           onSelectChat={handleChatSelect}
+          activeProfileId={activeProfile}
+          onChatsChange={(chat) =>
+            setChats((prev = []) => [...prev, chat])
+          }
+          onChatsDelete={(chat) =>
+            setChats([...chats.filter(c => c !== chat)])
+          }
         />
       )}
-      {activeChat && <ChatBox messages={messages} />}
+      {activeChat != null && <ChatBox messages={messages} />}
     </div>
   );
 }
