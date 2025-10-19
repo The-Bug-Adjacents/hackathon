@@ -63,15 +63,15 @@ def hashed_password(password: str) -> str:
 def verify_password(plain_password: str, hash_password: str) -> bool:
     return pwd_context.verify(plain_password, hash_password)
 
-SECRET_KEY = "key"
+secret_key = os.getenv("SECRET_KEY")
 ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 30
+ACCESS_TOKEN_EXPIRE_MINUTES = 1440
 
 def create_access_token(data: dict):
     to_encode = data.copy()
     expire = datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     to_encode.update({"exp": expire})
-    return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+    return jwt.encode(to_encode, secret_key, algorithm=ALGORITHM)
 
 users_db = {}
 @app.get('/')
