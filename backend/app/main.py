@@ -325,7 +325,7 @@ def create_chat_session(data: dict):
             conn.close()
 
 @app.get('/chats/{userId}/{profileId}')
-def get_user_chats(userId: str, profileId: int, current_userId: dict = Depends(get_current_user_id)):
+async def get_user_chats(userId: str, profileId: int, current_userId: dict = Depends(get_current_user_id)):
     if current_userId["username"] != userId:
         raise HTTPException(status_code=401, detail="Unauthorized access denied")
 
@@ -374,7 +374,7 @@ def delete_chat(chatlogId: int, current_userId: dict = Depends(get_current_user_
             conn.close()
 
 @app.get('/chats/{chatlogId}')
-def get_chat_messages(chatlogId: int, current_userId: dict = Depends(get_current_user_id)):
+async def get_chat_messages(chatlogId: int, current_userId: dict = Depends(get_current_user_id)):
     token_userId = current_userId["username"]
 
     conn = None
