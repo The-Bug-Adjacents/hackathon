@@ -14,6 +14,7 @@ export default function ChatBox({
   activeChat,
   activeProfile,
   userId,
+  model, // Added model prop
 }) {
   const { authorizedFetch, logout } = useAuth();
   const [open, setOpen] = useState(false);
@@ -97,25 +98,35 @@ export default function ChatBox({
   return (
     <Box className={`flex-1 flex flex-col h-full ${className}`}>
       {/* Account settings bar */}
-      <div className="relative mx-4 mt-4 bg-secondary border border-border rounded-2xl shadow-inner p-3 flex justify-end items-center">
-        <button
-          className="p-2 rounded-full hover:bg-input transition-colors"
-          title="Account settings"
-          onClick={() => setOpen((prev) => !prev)}
-          aria-label="Open account settings"
-        >
-          <UserCircle className="h-6 w-6 text-foreground" />
-        </button>
-        {open && (
-          <div className="absolute right-0 top-full mt-2 w-40 bg-secondary border border-border rounded-lg shadow-lg z-50">
-            <button
-              onClick={logout}
-              className="w-full text-left px-3 py-2 text-sm text-foreground hover:bg-border"
-            >
-              Logout
-            </button>
+      <div className="relative mx-4 mt-4 bg-secondary border border-border rounded-2xl shadow-inner p-3 flex justify-between items-center">
+        {/* Model Name Display */}
+        {model && (
+          <div className="text-sm font-medium text-foreground capitalize">
+            {model}
           </div>
         )}
+
+        {/* Profile Button and Dropdown */}
+        <div className="relative">
+          <button
+            className="p-2 rounded-full hover:bg-input transition-colors"
+            title="Account settings"
+            onClick={() => setOpen((prev) => !prev)}
+            aria-label="Open account settings"
+          >
+            <UserCircle className="h-6 w-6 text-foreground" />
+          </button>
+          {open && (
+            <div className="absolute right-0 top-full mt-2 w-40 bg-secondary border border-border rounded-lg shadow-lg z-50">
+              <button
+                onClick={logout}
+                className="w-full text-left px-3 py-2 text-sm text-foreground hover:bg-border"
+              >
+                Logout
+              </button>
+            </div>
+          )}
+        </div>
       </div>
 
       {title && <div className="px-3 py-2 border-b border-border text-sm opacity-80">{title}</div>}
@@ -127,10 +138,10 @@ export default function ChatBox({
             No messages yet — start chatting below!
           </div>
         )}
-        {messages.map((m) => {
+        {messages.map((m, i) => {
           const isUser = m.sender === "user";
           return (
-            <div key={m.id} className={`flex ${isUser ? "justify-end" : "justify-start"}`}>
+            <div key={m.id || i} className={`flex ${isUser ? "justify-end" : "justify-start"}`}>
               <div
                 className={`bg-secondary border border-border rounded-2xl shadow-inner p-3 w-fit max-w-[80%] text-foreground whitespace-pre-wrap`}
               >

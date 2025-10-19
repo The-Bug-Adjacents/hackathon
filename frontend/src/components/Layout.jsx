@@ -14,6 +14,7 @@ export default function Layout() {
   const [noProfies, setNoProfiles] = useState(false)
   const [activeProfile, setActiveProfile] = useState(() => localStorage.getItem("activeProfile"))
   const [chats, setChats] = useState([])
+  const [model, setModel] = useState(null)
   const [activeChat, setActiveChat] = useState(() => localStorage.getItem("activeChat"))
   const [messages, setMessages] = useState([])
 
@@ -45,16 +46,21 @@ export default function Layout() {
     const data = await res.json()
     if (!Array.isArray(data.chatlogIds)) {
     setChats([])
-    return
+    return null
   }
     setChats(data.chatlogIds)
     return data.chatlogIds[0] ?? null
   }
 
-  const fetchMessages = async (chatId) => {
-    const res = await authorizedFetch(`/api/chats/${userId}/${activeProfile}/${chatId}/messages`)
+  const fetchMessages = async (chatId, profileId) => {
+    if (!chatId || !profileId) {
+      setMessages([]);
+      setModel(null);
+      return;
+    }
+    const res = await authorizedFetch(`/api/chats/${userId}/${profileId}/${chatId}/messages`)
     const data = await res.json()
-    const model = data.model
+    setModel(data.model);
     if (!Array.isArray(data.messages)) {
     setMessages([])
     return
@@ -65,18 +71,29 @@ export default function Layout() {
   // when profile changes, store + reload chats
   const handleProfileSelect = async (id, cid) => {
     const stringID = id.toString();
-    setActiveProfile(stringID)
-    localStorage.setItem("activeProfile", stringID)
-    let tmp = await fetchChats(stringID);
-    handleChatSelect(cid != undefined ? cid.toString() : tmp != null ? tmp : "")
+    setActiveProfile(stringID);
+    localStorage.setItem("activeProfile", stringID);
+    const earliestChatId = await fetchChats(stringID);
+    const nextChat = cid !== undefined ? cid : earliestChatId;
+    // Pass the new profile ID directly to avoid stale state
+    handleChatSelect(nextChat, stringID);
   }
 
   // when chat changes, store + reload messages
-  const handleChatSelect = (id) => {
-    const stringID = id.toString();
-    setActiveChat(stringID)
-    localStorage.setItem("activeChat", stringID)
-    fetchMessages(stringID)
+  const handleChatSelect = (id, profileIdForFetch = null) => {
+    const stringID = id ? id.toString() : null;
+    setActiveChat(stringID);
+    
+    const profileToUse = profileIdForFetch || activeProfile;
+
+    if (stringID && profileToUse) {
+      localStorage.setItem("activeChat", stringID);
+      fetchMessages(stringID, profileToUse);
+    } else {
+      localStorage.removeItem("activeChat");
+      setMessages([]);
+      setModel(null);
+    }
   }
 
   return (
@@ -114,7 +131,7 @@ export default function Layout() {
           activeChat={activeChat}
           activeProfile={activeProfile}
           userId={userId}
-          
+          model={model}
         />
       )}
       <ProfileModal title={"Build your first profile"} isOpen={noProfies} onClose={() => {setNoProfiles(false)}} onSave={async (newProfile) => {
