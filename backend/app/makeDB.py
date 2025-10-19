@@ -21,8 +21,7 @@ def create_database():
         print("Creating new tables with diagnostic schema...")
         cursor.execute('''
             CREATE TABLE IF NOT EXISTS users (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                username TEXT NOT NULL UNIQUE,
+                username TEXT NOT NULL UNIQUE PRIMARY KEY,
                 email TEXT NOT NULL UNIQUE,
                 hashed_pass TEXT NOT NULL
             )

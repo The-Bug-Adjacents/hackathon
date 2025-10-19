@@ -73,7 +73,6 @@ def create_access_token(data: dict):
     to_encode.update({"exp": expire})
     return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
 
-users_db = {}
 @app.get('/')
 def read_root():
     return {"message": "Welcome to the Hackathon FastAPI backend!"}
@@ -84,22 +83,41 @@ def hello():
 
 @app.post("/register", response_model=Token)
 def register(user: User):
-    if user.email in users_db:
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+    cursor.execute("SELECT email FROM users WHERE email = ?", (user.email,))
+    if cursor.fetchone():
+        conn.close()
         raise HTTPException(status_code=400, detail="Email already registered")
 
     hashed_pwd = hashed_password(user.password)
-    users_db[user.email] = {
-        "username": user.username,
-        "email": user.email,
-        "hashed_pass": hashed_pwd
-    }
+    try:
+        cursor.execute(
+            "INSERT INTO users (username, email, hashed_pass) VALUES (?, ?, ?)",
+            (user.username, user.email, hashed_pwd)
+        )
+        conn.commit()
+    except sqlite3.Error as e:
+        conn.close()
+        raise HTTPException(status_code=500, detail=f"Database error: {e}")
+    finally:
+        conn.close()
+
     access_token = create_access_token(data={"sub": user.email})
     return {"id": user.username, "token": access_token}
+
 @app.post("/login", response_model=Token)
 def login(user_credentials: UserLogin):
-    user_in_db = users_db.get(user_credentials.email)
+    conn = sqlite3.connect(DB_PATH)
+    conn.row_factory = sqlite3.Row
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM users WHERE email = ?", (user_credentials.email,))
+    user_in_db = cursor.fetchone()
+    conn.close()
+
     if not user_in_db or not verify_password(user_credentials.password, user_in_db["hashed_pass"]):
         raise HTTPException(status_code=401, detail="Invalid credentials")
+
     access_token = create_access_token(data={"sub": user_in_db["email"]})
     return {"token": access_token, "id": user_in_db["username"]}
 
@@ -109,11 +127,21 @@ def get_current_user(token: str = Depends(oauth2_scheme)):
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         email: str = payload.get("sub")
-        if email is None or email not in users_db:
+        if email is None:
             raise HTTPException(status_code=401, detail="Invalid token")
-        return users_db[email]
     except JWTError:
         raise HTTPException(status_code=401, detail="Invalid token")
+
+    conn = sqlite3.connect(DB_PATH)
+    conn.row_factory = sqlite3.Row
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM users WHERE email = ?", (email,))
+    user = cursor.fetchone()
+    conn.close()
+
+    if user is None:
+        raise HTTPException(status_code=401, detail="Invalid token")
+    return user
 
 @app.get("/me", response_model=UserPublic)
 async def read_current_user(current_user: dict = Depends(get_current_user)):
@@ -145,14 +173,11 @@ async def post_ruleset(data: dict):
         conn = sqlite3.connect(DB_PATH)
         cursor = conn.cursor()
 
-        # --- START OF DIAGNOSTIC CHECK ---
-        # This is a final, desperate check to understand the paradox.
         if not isinstance(profileName, str) or not profileName.strip():
             raise HTTPException(
                 status_code=500, 
                 detail=f"DIAGNOSTIC FAILURE: The 'profileName' variable is invalid right before the database insert. This should not be possible. Value received: '{profileName}'. Type: {type(profileName)}. Please report this entire message."
             )
-        # --- END OF DIAGNOSTIC CHECK ---
 
         cursor.execute(
             "INSERT INTO model_profiles (userId, profileId, profileName, model) VALUES (?, ?, ?, ?)",
@@ -162,7 +187,6 @@ async def post_ruleset(data: dict):
     except sqlite3.Error as e:
         if os.path.exists(file_path):
             os.remove(file_path)
-        # This is the original error you are seeing.
         raise HTTPException(status_code=500, detail=f"Database error: {e}. Ruleset file was not saved.")
     finally:
         if conn:
