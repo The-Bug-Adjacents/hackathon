@@ -55,6 +55,13 @@ class Token(BaseModel):
     # token_type: str
     id: str
 
+class Message():
+    messageContent: str
+    sender: str
+    messageId: int
+    chatlogId: int
+    model: str
+
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 def hashed_password(password: str) -> str:
@@ -125,7 +132,7 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/login")
 
 def get_current_user(token: str = Depends(oauth2_scheme)):
     try:
-        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        payload = jwt.decode(token, secret_key, algorithms=[ALGORITHM])
         email: str = payload.get("sub")
         if email is None:
             raise HTTPException(status_code=401, detail="Invalid token")
@@ -145,7 +152,7 @@ def get_current_user(token: str = Depends(oauth2_scheme)):
 
 def get_current_user_id(token: str = Depends(oauth2_scheme)):
     try:
-        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        payload = jwt.decode(token, secret_key, algorithms=[ALGORITHM])
         email: str = payload.get("sub")
         if email is None:
             raise HTTPException(status_code=401, detail="Invalid token")
@@ -399,6 +406,8 @@ async def get_chat_messages(chatlogId: int, current_userId: dict = Depends(get_c
                 status_code=404,
                 detail=f"Chat log with ID {chatlogId} not found"
             )
+        cursor.execute("SELECT model FROM model_profiles WHERE profileId IN (SELECT profileId FROM chat_logs WHERE chatlogId = ?)", (chatlogId,))
+
 
         cursor.execute(
             "SELECT messageId, sender, messageContent FROM messages WHERE chatlogId = ? ORDER BY messageId DESC",
