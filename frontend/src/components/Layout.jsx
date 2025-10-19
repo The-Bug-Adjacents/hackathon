@@ -20,6 +20,12 @@ export default function Layout() {
     fetchProfiles()
   }, [])
 
+  useEffect(() => {
+  if (activeProfile != null) {
+    fetchChats(activeProfile)
+  }
+}, [])
+
   const fetchProfiles = async () => {
     const res = await authorizedFetch(`/api/profiles/${userId}`)
     const data = await res.json()
@@ -53,9 +59,10 @@ export default function Layout() {
 
   // when profile changes, store + reload chats
   const handleProfileSelect = (id) => {
-    setActiveProfile(id)
-    localStorage.setItem("activeProfile", id)
-    fetchChats(id)
+    const stringID = id.toString();
+    setActiveProfile(stringID)
+    localStorage.setItem("activeProfile", stringID)
+    fetchChats(stringID)
     setActiveChat(null)
     localStorage.removeItem("activeChat")
     setMessages([])
@@ -63,9 +70,10 @@ export default function Layout() {
 
   // when chat changes, store + reload messages
   const handleChatSelect = (id) => {
-    setActiveChat(id)
-    localStorage.setItem("activeChat", id)
-    fetchMessages(id)
+    const stringID = id.toString();
+    setActiveChat(stringID)
+    localStorage.setItem("activeChat", stringID)
+    fetchMessages(stringID)
   }
 
   return (

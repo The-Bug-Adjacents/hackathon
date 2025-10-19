@@ -266,10 +266,6 @@ def create_chat_session(data: dict):
         conn = sqlite3.connect(DB_PATH)
         cursor = conn.cursor()
 
-        cursor.execute("SELECT id FROM model_profiles WHERE userId = ? AND profileId = ?", (userId, profileId))
-        if cursor.fetchone() is None:
-            raise HTTPException(status_code=404, detail=f"Model profile not found for user {userId} and profile {profileId}")
-
         cursor.execute("INSERT INTO chat_logs (userId, profileId) VALUES (?, ?)", (userId, profileId))
         conn.commit()
         

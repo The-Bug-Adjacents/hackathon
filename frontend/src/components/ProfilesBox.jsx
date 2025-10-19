@@ -41,7 +41,9 @@ export default function ProfilesBox({ profiles, activeProfile, onSelectProfile, 
   // 🧠 Whenever profiles prop changes (like after fetch), rebuild avatar list
   useEffect(() => {
     if (profiles?.length) {
+      console.log(profiles)
       const withAvatars = profiles.map((p) => ({
+        
         id: p.profileId,
         name: p.profileName,
         aName: p.aName || generateAvatarText(p.profileName),
@@ -79,7 +81,7 @@ export default function ProfilesBox({ profiles, activeProfile, onSelectProfile, 
     setAvatarPs((prev) => [...prev, profileWithAvatar]);
 
     newProfile = {
-      id: data.profileId,
+      profileId: data.profileId,
       ...newProfile
     }
     // Step 5: Update Layout’s global profile list
@@ -123,7 +125,7 @@ export default function ProfilesBox({ profiles, activeProfile, onSelectProfile, 
               <div
                 id={profile.id}
                 className={`w-12 h-12 rounded-full overflow-hidden border-2 border-border flex items-center justify-center ${
-                  activeProfile === profile.id
+                  activeProfile === profile.id.toString()
                     ? "border-dashed border-foreground group-hover:border-solid transition"
                     : "group-hover:border-foreground transition"
                 }`}
