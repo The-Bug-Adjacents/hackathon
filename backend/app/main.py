@@ -348,23 +348,33 @@ def get_chat_messages(userId: str, profileId: int, chatlogId: int):
         conn.row_factory = sqlite3.Row
         cursor = conn.cursor()
 
-        cursor.execute(
-            "SELECT chatlogId FROM chat_logs WHERE userId = ? AND profileId = ? AND chatlogId = ?",
-            (userId, profileId, chatlogId)
-        )
-        if cursor.fetchone() is None:
+        # 1. Verify ownership and get the model in one query
+        cursor.execute("""
+            SELECT mp.model
+            FROM chat_logs cl
+            JOIN model_profiles mp ON cl.userId = mp.userId AND cl.profileId = mp.profileId
+            WHERE cl.userId = ? AND cl.profileId = ? AND cl.chatlogId = ?
+        """, (userId, profileId, chatlogId))
+        
+        model_result = cursor.fetchone()
+        if model_result is None:
             raise HTTPException(
                 status_code=404,
                 detail=f"Chat log with ID {chatlogId} not found for user {userId} and profile {profileId}"
             )
+        
+        model = model_result['model']
 
+        # 2. Fetch the messages
         cursor.execute(
             "SELECT messageId, sender, messageContent FROM messages WHERE chatlogId = ? ORDER BY messageId ASC",
             (chatlogId,)
         )
 
         messages = cursor.fetchall()
-        return {"messages": [dict(row) for row in messages]}
+        
+        # 3. Return combined data
+        return {"model": model, "messages": [dict(row) for row in messages]}
 
     except sqlite3.Error as e:
         raise HTTPException(status_code=500, detail=f"Database error: {e}")
