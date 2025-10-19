@@ -134,7 +134,7 @@ export default function ChatBox({
               <div
                 className={`bg-secondary border border-border rounded-2xl shadow-inner p-3 w-fit max-w-[80%] text-foreground whitespace-pre-wrap`}
               >
-                {m.content}
+                {m.content || m.messageContent}
               </div>
             </div>
           );

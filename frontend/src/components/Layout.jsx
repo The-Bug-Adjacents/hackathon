@@ -52,13 +52,14 @@ export default function Layout() {
   }
 
   const fetchMessages = async (chatId) => {
-    const res = await authorizedFetch(`/api/chat/${userId}/${activeProfile}/${chatId}/messages`)
+    const res = await authorizedFetch(`/api/chats/${userId}/${activeProfile}/${chatId}/messages`)
     const data = await res.json()
-    if (!Array.isArray(data)) {
+    const model = data.model
+    if (!Array.isArray(data.messages)) {
     setMessages([])
     return
   }
-    setMessages(data)
+    setMessages(data.messages)
   }
 
   // when profile changes, store + reload chats

@@ -125,7 +125,7 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/login")
 
 def get_current_user(token: str = Depends(oauth2_scheme)):
     try:
-        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        payload = jwt.decode(token, secret_key, algorithms=[ALGORITHM])
         email: str = payload.get("sub")
         if email is None:
             raise HTTPException(status_code=401, detail="Invalid token")
@@ -300,16 +300,32 @@ def delete_user_profile(userId: str, profileId: int):
     conn = None
     try:
         conn = sqlite3.connect(DB_PATH)
-        conn.row_factory = sqlite3.Row
         cursor = conn.cursor()
 
-        cursor.execute(
-            "DELETE FROM model_profiles WHERE profileId = ?",
-            (profileId,)
-        )
+        # Find all chat logs associated with the profile
+        cursor.execute("SELECT chatlogId FROM chat_logs WHERE userId = ? AND profileId = ?", (userId, profileId))
+        chatlog_ids = [row[0] for row in cursor.fetchall()]
+
+        if chatlog_ids:
+            # Delete all messages from all associated chat logs
+            cursor.executemany("DELETE FROM messages WHERE chatlogId = ?", [(cid,) for cid in chatlog_ids])
+            # Delete all associated chat logs
+            cursor.execute("DELETE FROM chat_logs WHERE userId = ? AND profileId = ?", (userId, profileId))
+
+        # Delete the model profile itself
+        cursor.execute("DELETE FROM model_profiles WHERE userId = ? AND profileId = ?", (userId, profileId))
+        
         conn.commit()
-        return {"message": f"Profile Deleted successfully"}
-    except:
+
+        # Delete the ruleset file
+        filename = f"{userId}_{profileId}.json"
+        file_path = UPLOAD_DIR / filename
+        if os.path.exists(file_path):
+            os.remove(file_path)
+
+        return {"message": f"Profile {profileId} and all associated data deleted successfully."}
+
+    except sqlite3.Error as e:
         raise HTTPException(status_code=500, detail=f"Database error: {e}")
     finally:
         if conn:
@@ -370,16 +386,18 @@ def delete_chat(chatlogId: int):
     conn = None
     try:
         conn = sqlite3.connect(DB_PATH)
-        conn.row_factory = sqlite3.Row
         cursor = conn.cursor()
 
-        cursor.execute(
-            "DELETE FROM chat_logs WHERE chatlogId = ?",
-            (chatlogId,)
-        )
+        # Delete all messages for the chat log first
+        cursor.execute("DELETE FROM messages WHERE chatlogId = ?", (chatlogId,))
+        
+        # Then delete the chat log itself
+        cursor.execute("DELETE FROM chat_logs WHERE chatlogId = ?", (chatlogId,))
+
         conn.commit()
-        return {"message": f"Chat log with ID {chatlogId} deleted successfully"}
-    except:
+        return {"message": f"Chat log with ID {chatlogId} and its messages deleted successfully."}
+
+    except sqlite3.Error as e:
         raise HTTPException(status_code=500, detail=f"Database error: {e}")
     finally:
         if conn:
