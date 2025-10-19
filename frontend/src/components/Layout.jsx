@@ -2,6 +2,7 @@
 import { useAuth } from "../stores/authStore";
 import ChatBox from "./ChatBox";
 import ChatHistoryBox from "./ChatHistoryBox";
+import ProfileModal from "./ProfileModal";
 import ProfilesBox from "./ProfilesBox";
 import { useState, useEffect } from "react";
 
@@ -10,6 +11,7 @@ export default function Layout() {
   const { userId, authorizedFetch } = useAuth();
   
   const [profiles, setProfiles] = useState([])
+  const [noProfies, setNoProfiles] = useState(false)
   const [activeProfile, setActiveProfile] = useState(() => localStorage.getItem("activeProfile"))
   const [chats, setChats] = useState([])
   const [activeChat, setActiveChat] = useState(() => localStorage.getItem("activeChat"))
@@ -31,20 +33,22 @@ export default function Layout() {
     const data = await res.json()
    if (!Array.isArray(data.profiles)) {
     setProfiles([])
+    setNoProfiles(true)
     return
   }
+    setNoProfiles(data.profiles.length < 1)
     setProfiles(data.profiles)
   }
 
   const fetchChats = async (profileId) => {
     const res = await authorizedFetch(`/api/chats/${userId}/${profileId}`)
     const data = await res.json()
-    console.log(data)
     if (!Array.isArray(data.chatlogIds)) {
     setChats([])
     return
   }
     setChats(data.chatlogIds)
+    return data.chatlogIds[0] ?? null
   }
 
   const fetchMessages = async (chatId) => {
@@ -58,14 +62,12 @@ export default function Layout() {
   }
 
   // when profile changes, store + reload chats
-  const handleProfileSelect = (id) => {
+  const handleProfileSelect = async (id, cid) => {
     const stringID = id.toString();
     setActiveProfile(stringID)
     localStorage.setItem("activeProfile", stringID)
-    fetchChats(stringID)
-    setActiveChat(null)
-    localStorage.removeItem("activeChat")
-    setMessages([])
+    let tmp = await fetchChats(stringID);
+    handleChatSelect(cid != undefined ? cid.toString() : tmp != null ? tmp : "")
   }
 
   // when chat changes, store + reload messages
@@ -80,6 +82,7 @@ export default function Layout() {
     <div className="flex h-screen bg-background text-foreground p-2 gap-2">
       <ProfilesBox
        title="Profiles" 
+       noProfiles={noProfies}
        profiles={profiles}
        activeProfile={activeProfile}
        onSelectProfile={handleProfileSelect}
@@ -102,7 +105,50 @@ export default function Layout() {
           }
         />
       )}
-      {activeChat != null && <ChatBox messages={messages} />}
-    </div>
+      {activeChat != null && (
+        <ChatBox 
+          title={`Chat ${activeChat}`} 
+          messages ={messages}
+          setMessages={setMessages}
+          activeChat={activeChat}
+          activeProfile={activeProfile}
+          userId={userId}
+          
+        />
+      )}
+      <ProfileModal title={"Build your first profile"} isOpen={noProfies} onClose={() => {setNoProfiles(false)}} onSave={async (newProfile) => {
+        try {
+          // Step 1: Send new profile to backend
+          const res = await authorizedFetch(`/api/rules`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(newProfile),
+          });
+
+          if (!res.ok) {
+            throw new Error(`Failed to save profile: ${res.status}`);
+          }
+
+          // Step 2: Parse backend response (which should include the real id)
+          const data = await res.json();
+
+          newProfile = {
+            profileId: data.profileId,
+            ...newProfile
+          }
+          // Step 5: Update Layout’s global profile list
+            setProfiles([newProfile]);
+
+          // Step 6: Optionally select the new profile immediately
+          handleProfileSelect(data.profileId, data.chatlogId);
+          
+
+          setNoProfiles(false);
+        } catch (error) {
+          console.error("Failed to save profile:", error);
+          // setError("Error adding new profile. Please try again.");
+        }
+      }}/>
+      </div>
   );
 }

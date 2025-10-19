@@ -148,7 +148,7 @@ export default function ProfileModal({title, isOpen, onClose, onSave }) {
         ruleset: {
           targetAudience: targetAudience,
           otherInstructions: otherInstructions,
-          rule: aiCodingAssist
+          rule: aiDocumentPrompt
         },
       };
   } else {
