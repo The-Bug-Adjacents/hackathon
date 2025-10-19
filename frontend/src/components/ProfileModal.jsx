@@ -18,6 +18,115 @@ export default function ProfileModal({title, isOpen, onClose, onSave }) {
 
   const [otherInstructions, setOtherInstructions] = useState("");
 
+// shared header block
+  const header = `
+  SYSTEM CONTEXT
+  - Operator: ${name || "User"}
+  - Model: ${aiModel || "unspecified"}
+  - Use Case: ${useCase || "general"}
+  `.trim();
+
+  // earlier, more detailed CODE template
+  const aiRulesPrompt = `
+  ${header}
+
+  You are an AI code assistant. Follow these rules exactly when generating or editing code:
+
+  1. Preferred Language
+    - Always write your responses in ${preferredLanguage || "the user’s chosen language"}.
+    - Do not include code snippets in any other language unless specifically requested.
+
+  2. Commenting Rules
+    - ${commentingRules || "Provide clear, concise, and meaningful comments that explain logic and purpose."}
+    - Keep comments consistent with the tone and depth described above.
+
+  3. Spacing & Formatting Instructions
+    - ${spacingInstruction || "Follow standard formatting conventions (2 or 4 spaces per indent, one blank line between functions)."}
+    - Ensure the final code is clean, readable, and ready to copy-paste.
+
+  4. Output Rules
+    - Only return code and essential explanations.
+    - Do not include unrelated commentary or filler text.
+    - Follow all style and formatting rules defined above.
+
+  5. Other Instructions (override/extend as needed)
+    - ${otherInstructions || "No additional special instructions."}
+  `.trim();
+
+  // earlier, more detailed DOCUMENT template
+  const aiDocumentPrompt = `
+  ${header}
+
+  You are an AI writing assistant. Follow these rules exactly when creating or editing documents:
+
+  1. Target Audience
+    - This document is intended for ${targetAudience || "a general audience"}.
+    - Adapt tone, complexity, and examples to suit this audience.
+
+  2. Writing Style & Tone
+    - Maintain a consistent, engaging, and clear tone that fits the document’s purpose.
+    - Adjust formality and vocabulary to match the target audience.
+    - Avoid filler language or unnecessary repetition.
+
+  3. Structure & Flow
+    - Organize ideas logically with clear transitions.
+    - Use headings, bullet points, or numbered lists when they enhance clarity.
+    - Begin with a strong introduction and end with a concise summary or call to action.
+
+  4. Formatting & Spacing
+    - Follow standard formatting conventions for professional documents.
+    - Use consistent line spacing, paragraph breaks, and indentation if applicable.
+
+  5. Clarity & Readability
+    - Keep sentences concise and active.
+    - Define any technical or uncommon terms if they’re necessary for understanding.
+    - Aim for readability that aligns with the target audience.
+
+  6. Output Rules
+    - Deliver the document in a clean, copy-ready format.
+    - Do not include instructions, meta-commentary, or irrelevant text.
+    - Follow all the style and audience rules defined above.
+
+  7. Other Instructions (override/extend as needed)
+    - ${otherInstructions || "No additional special instructions."}
+  `.trim();
+
+  const buildPromptForUseCase = () => {
+    if (useCase === "coding-assistance") {
+      return `
+${header}
+
+You are an AI code assistant. Follow these rules:
+
+1) Preferred Language
+   - ${preferredLanguage || "the user’s chosen language"}
+
+2) Commenting Rules
+   - ${commentingRules || "Provide concise, meaningful comments explaining logic and purpose."}
+
+3) Spacing Instructions
+   - ${spacingInstruction || "Use standard indentation (e.g., 2–4 spaces) and clean whitespace."}
+
+4) Other Instructions (default)
+   - ${otherInstructions || "No additional special instructions."}
+`.trim();
+    }
+
+    // documentation-creation
+    return `
+${header}
+
+You are an AI writing assistant. Follow these rules:
+
+1) Target Audience
+   - ${targetAudience || "a general audience"}
+
+2) Other Instructions (default)
+   - ${otherInstructions || "No additional special instructions."}
+`.trim();
+  };
+
+
 
   const validate = () => {
     if (!name) {

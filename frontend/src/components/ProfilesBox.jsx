@@ -1,9 +1,8 @@
+import { useEffect, useState } from "react";
+import { Plus } from "lucide-react";
 import Box from "./Box";
-import { Plus } from "lucide-react"; // You can install lucide-react for clean icons
-import { useState } from "react";
 import ProfileModal from "./ProfileModal";
 import ProfileMenu from "./ProfileMenu";
-
 
 const usedNames = new Set();
 
@@ -21,108 +20,139 @@ function generateAvatarText(name) {
   return variant;
 }
 
-export default function ProfilesBox({ title, className = "" }) {
-
+export default function ProfilesBox({ profiles, activeProfile, onSelectProfile, onProfilesChange, title, className = "" }) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
-  const [activeProfile, setActiveProfile] = useState("");
-  const [profiles, setProfiles] = useState(() => {
-    // if you'll load from an API later, you can replace this with a fetch
-  const initialProfiles = [
-    {
-      id: "12sas2",
-      name: "hyperion code assitant",
-      aName: "",
-      model: "hyperion",
-    },
-    {
-      id: "12sas3",
-      name: "hermes documentation creator",
-      aName: "",
-      model: "hermes",
-    },
-    ];
+  const [avatarPs, setAvatarPs] = useState([]);
 
-    setActiveProfile(initialProfiles[0].id ?? "");
-    // generate names only once
-    return initialProfiles.map(p => ({
-      ...p,
-      aName: generateAvatarText(p.name),
-    }));
-  });
+  // 🧠 Whenever profiles prop changes (like after fetch), rebuild avatar list
+  useEffect(() => {
+    if (profiles?.length) {
+      const withAvatars = profiles.map((p) => ({
+        ...p,
+        aName: p.aName || generateAvatarText(p.name),
+      }));
+      setAvatarPs(withAvatars);
+    }
+  }, [profiles]);
 
-
-
-  const handleProfileSelect = (id) => setActiveProfile(id);
-  
-  
   const handleAddProfile = () => setIsModalOpen(true);
 
   const handleSaveProfile = async (newProfile) => {
-    try {
-      // const savedProfile = await sendProfileToAPI(newProfile);
-      setProfiles((prev) => [...prev, {
-        id: "isa",
-        name: newProfile.name,
-        aName: generateAvatarText(newProfile.name),
-        model: newProfile.Model,
-      }]);
-    } catch (error) {
-      console.error("Failed to save profile:", error);
+  try {
+    // Step 1: Send new profile to backend
+    const res = await authorizedFetch(`/rules`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(newProfile),
+    });
+
+    if (!res.ok) {
+      throw new Error(`Failed to save profile: ${res.status}`);
     }
-  };
+
+    // Step 2: Parse backend response (which should include the real id)
+    const savedProfile = await res.json();
+
+    // Step 3: Add avatar name locally
+    const profileWithAvatar = {
+      ...savedProfile,
+      aName: generateAvatarText(savedProfile.name),
+    };
+
+    // Step 4: Update this component’s state
+    setAvatarPs((prev) => [...prev, profileWithAvatar]);
+
+    // Step 5: Update Layout’s global profile list
+    if (typeof onProfilesChange === "function") {
+      onProfilesChange((prev) => [...prev, profileWithAvatar]);
+    }
+
+    // Step 6: Optionally select the new profile immediately
+    if (typeof onSelectProfile === "function") {
+      onSelectProfile(profileWithAvatar.id);
+    }
+
+    setIsModalOpen(false);
+  } catch (error) {
+    console.error("Failed to save profile:", error);
+    setError("Error adding new profile. Please try again.");
+  }
+};
 
   return (
-    <Box title={title} className={`w-fit flex-shrink-0 h-full flex flex-col items-center max-h-[100vh] overflow-y-auto ${className}`}>
-        <div 
-          onMouseEnter={() => setIsHovered(true)}
-          onMouseLeave={() => setIsHovered(false)}
-          className="flex flex-col items-center gap-2 h-full"
+    <Box
+      title={title}
+      className={`w-fit flex-shrink-0 h-full flex flex-col items-center max-h-[100vh] overflow-y-auto ${className}`}
+    >
+      <div
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
+        className="flex flex-col items-center gap-2 h-full"
+      >
+        {avatarPs.map((profile) => (
+          <div
+            key={profile.id}
+            className={`group flex gap-1 items-center justify-between p-1 ${
+              isHovered
+                ? "w-[45ch] rounded-md border-2 border-border hover:border-foreground transition cursor-pointer"
+                : "w-fit"
+            }`}
+            onClick={() => onSelectProfile(profile.id)}
+          >
+            <div className="flex items-center gap-2">
+              <div
+                id={profile.id}
+                className={`w-12 h-12 rounded-full overflow-hidden border-2 border-border flex items-center justify-center ${
+                  activeProfile === profile.id
+                    ? "border-dashed border-foreground group-hover:border-solid transition"
+                    : "group-hover:border-foreground transition"
+                }`}
+              >
+                {profile.aName}
+              </div>
+            </div>
+            {isHovered && (
+              <div className="flex gap-2 justify-between w-[30ch] items-center">
+                <span className="text-sm font-medium leading-none align-middle">
+                  {profile.name}
+                </span>
+                {/* optional menu */}
+                <ProfileMenu onDelete={() => {}} onEdit={() => {}} onView={() => {}} />
+              </div>
+            )}
+          </div>
+        ))}
+
+        {/* Add new profile */}
+        <div
+          onClick={handleAddProfile}
+          className={`group cursor-pointer flex gap-1 items-center justify-between p-1 ${
+            isHovered ? "w-[45ch] rounded-md border-2 border-border" : "w-fit"
+          }`}
         >
-        {profiles.map((profile) => {
-          return (
-          <div 
-            className={`group flex gap-1 items-center justify-between p-1 ${isHovered ? "w-[45ch] rounded-md border-2 border-border hover:border-foreground transition cursor-pointer" : "w-fit"}`}
-            onClick={() => handleProfileSelect(profile.id)}
-         >
           <div className="flex items-center gap-2">
-            <div
-              key={profile.id}
-              id={profile.id}
-              className={`w-12 h-12 rounded-full overflow-hidden border-2 border-border  flex items-center justify-center ${activeProfile === profile.id ? "border-dashed border-foreground group-hover:border-solid transition" : "group-hover:border-foreground transition"}`}
-            >
-              {profile.aName}
+            <div className="w-12 h-12 rounded-full flex items-center justify-center border-2 border-dashed border-border group-hover:border-foreground transition">
+              <Plus />
             </div>
           </div>
-            {isHovered &&
+          {isHovered && (
             <div className="flex gap-2 justify-between w-[30ch] items-center">
-              <span className="text-sm font-medium leading-none align-middle">{profile.name}</span>
-              {open && (
-                <ProfileMenu onDelete={()=>{}} onEdit={()=>{}} onView={()=>{}}/>
-              )}
-            </div> 
-            }
-          </div>
-          )
-          })}
-          <div 
-          onClick={handleAddProfile}
-          className={`group cursor-pointer flex gap-1 items-center justify-between p-1 ${isHovered ? "w-[45ch] rounded-md border-2 border-border" : "w-fit"}`}>
-        <div className="flex items-center gap-2">
-          <div
-            className="w-12 h-12 rounded-full flex items-center justify-center border-2 border-dashed border-border group-hover:border-foreground transition"
-          >
-            <Plus />
-          </div>
+              <span className="text-sm p-0 m-0 font-medium truncate leading-none align-middle">
+                Add a new profile
+              </span>
+            </div>
+          )}
         </div>
-        {isHovered &&
-            <div className="flex gap-2 justify-between w-[30ch] items-center">
-              <span className="text-sm p-0 m-0 font-medium truncate leading-none align-middle">Add a new profile</span>
-            </div> 
-            }
-        </div>
-        </div>
-        <ProfileModal title={"Create New Profile"} isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} onSave={handleSaveProfile}/>
+      </div>
+
+      {/* Modal */}
+      <ProfileModal
+        title={"Create New Profile"}
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onSave={handleSaveProfile}
+      />
     </Box>
   );
 }
