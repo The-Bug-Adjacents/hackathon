@@ -253,6 +253,26 @@ def get_user_profiles(userId: str):
         if conn:
             conn.close()
 
+@app.delete('profiles/{userId}/{profileId}')
+def delete_user_profile(userId: str, profileId: int):
+    conn = None
+    try:
+        conn = sqlite3.connect(DB_PATH)
+        conn.row_factory = sqlite3.Row
+        cursor = conn.cursor()
+
+        cursor.execute(
+            "DELETE FROM model_profiles WHERE profileId = ?",
+            (profileId,)
+        )
+        conn.commit()
+        return {"message": f"Profile Deleted successfully"}
+    except:
+        raise HTTPException(status_code=500, detail=f"Database error: {e}")
+    finally:
+        if conn:
+            conn.close()
+
 @app.post('/chats')
 def create_chat_session(data: dict):
     userId = data.get("userId")
@@ -295,6 +315,26 @@ def get_user_chats(userId: str, profileId: int):
         return {"chatlogIds": [row["chatlogId"] for row in chat_logs]}
 
     except sqlite3.Error as e:
+        raise HTTPException(status_code=500, detail=f"Database error: {e}")
+    finally:
+        if conn:
+            conn.close()
+
+@app.delete('/chats/{chatlogId}')
+def delete_chat(chatlogId: int):
+    conn = None
+    try:
+        conn = sqlite3.connect(DB_PATH)
+        conn.row_factory = sqlite3.Row
+        cursor = conn.cursor()
+
+        cursor.execute(
+            "DELETE FROM chat_logs WHERE chatlogId = ?",
+            (chatlogId,)
+        )
+        conn.commit()
+        return {"message": f"Chat log with ID {chatlogId} deleted successfully"}
+    except:
         raise HTTPException(status_code=500, detail=f"Database error: {e}")
     finally:
         if conn:
