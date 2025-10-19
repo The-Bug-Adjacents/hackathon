@@ -51,7 +51,7 @@ export default function ChatHistoryBox({ title, activeProfileId, chats, onChatsC
     });
 
     if (!res.ok) {
-      throw new Error(`Failed to save profile: ${res.status}`);
+      throw new Error(`Failed to add chat: ${res.status}`);
     }
 
     // Step 2: Parse backend response (which should include the real id)
@@ -78,7 +78,7 @@ export default function ChatHistoryBox({ title, activeProfileId, chats, onChatsC
     >
       <div className="flex flex-col items-center gap-2 h-full">
         {chats.map((chat, i) => {
-          const isSelected = activeChat === chat;
+          const isSelected = activeChat === chat.toString();
           // --- NEW: Check if this is the chat we are confirming to delete ---
           const isConfirmingDelete = confirmingDeleteId === chat;
 

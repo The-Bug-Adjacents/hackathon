@@ -295,6 +295,26 @@ def get_user_profiles(userId: str, current_userId: dict = Depends(get_current_us
         if conn:
             conn.close()
 
+@app.delete('profiles/{userId}/{profileId}')
+def delete_user_profile(userId: str, profileId: int):
+    conn = None
+    try:
+        conn = sqlite3.connect(DB_PATH)
+        conn.row_factory = sqlite3.Row
+        cursor = conn.cursor()
+
+        cursor.execute(
+            "DELETE FROM model_profiles WHERE profileId = ?",
+            (profileId,)
+        )
+        conn.commit()
+        return {"message": f"Profile Deleted successfully"}
+    except:
+        raise HTTPException(status_code=500, detail=f"Database error: {e}")
+    finally:
+        if conn:
+            conn.close()
+
 @app.post('/chats')
 def create_chat_session(data: dict):
     userId = data.get("userId")
@@ -307,10 +327,6 @@ def create_chat_session(data: dict):
     try:
         conn = sqlite3.connect(DB_PATH)
         cursor = conn.cursor()
-
-        # cursor.execute("SELECT id FROM model_profiles WHERE userId = ? AND profileId = ?", (userId, profileId))
-        # if cursor.fetchone() is None:
-        #     raise HTTPException(status_code=404, detail=f"Model profile not found for user {userId} and profile {profileId}")
 
         cursor.execute("INSERT INTO chat_logs (userId, profileId) VALUES (?, ?)", (userId, profileId))
         conn.commit()
@@ -350,33 +366,27 @@ async def get_user_chats(userId: str, profileId: int, current_userId: dict = Dep
             conn.close()
 
 @app.delete('/chats/{chatlogId}')
-def delete_chat(chatlogId: int, current_userId: dict = Depends(get_current_user_id)):
-    token_userId = current_userId["username"]
+def delete_chat(chatlogId: int):
     conn = None
-
     try:
         conn = sqlite3.connect(DB_PATH)
         conn.row_factory = sqlite3.Row
         cursor = conn.cursor()
 
-        cursor.execute("SELECT userId FROM model_profiles WHERE profileId IN (SELECT profileId FROM chat_logs WHERE chatlogId = ?)", (chatlogId,))
-        userId = cursor.fetchone()
-        if userId is None or userId["userId"] != token_userId:
-            raise HTTPException(status_code=401, detail="Unauthorized access denied")
-
-        cursor.execute("DELETE FROM chat_logs WHERE chatlogId = ?", (chatlogId,))
+        cursor.execute(
+            "DELETE FROM chat_logs WHERE chatlogId = ?",
+            (chatlogId,)
+        )
         conn.commit()
-        conn.close()
-    except sqlite3.Error as e:
+        return {"message": f"Chat log with ID {chatlogId} deleted successfully"}
+    except:
         raise HTTPException(status_code=500, detail=f"Database error: {e}")
     finally:
         if conn:
             conn.close()
 
-@app.get('/chats/{chatlogId}')
-async def get_chat_messages(chatlogId: int, current_userId: dict = Depends(get_current_user_id)):
-    token_userId = current_userId["username"]
-
+@app.get('/chats/{userId}/{profileId}/{chatlogId}/messages')
+def get_chat_messages(userId: str, profileId: int, chatlogId: int):
     conn = None
     try:
         conn = sqlite3.connect(DB_PATH)
