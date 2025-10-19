@@ -102,7 +102,17 @@ export default function Layout() {
           }
         />
       )}
-      {activeChat != null && <ChatBox messages={messages} />}
-    </div>
+      {activeChat != null && (
+        <ChatBox 
+          title={`Chat ${activeChat}`} 
+          messages ={messages}
+          setMessages={setMessages}
+          activeChat={activeChat}
+          activeProfile={activeProfile}
+          userId={userId}
+          
+        />
+      )}
+      </div>
   );
 }
