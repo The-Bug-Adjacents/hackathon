@@ -107,25 +107,28 @@ export default function ChatBox({
         )}
 
         {/* Profile Button and Dropdown */}
-        <div className="relative">
-          <button
-            className="p-2 rounded-full hover:bg-input transition-colors"
-            title="Account settings"
-            onClick={() => setOpen((prev) => !prev)}
-            aria-label="Open account settings"
-          >
-            <UserCircle className="h-6 w-6 text-foreground" />
-          </button>
-          {open && (
-            <div className="absolute right-0 top-full mt-2 w-40 bg-secondary border border-border rounded-lg shadow-lg z-50">
-              <button
-                onClick={logout}
-                className="w-full text-left px-3 py-2 text-sm text-foreground hover:bg-border"
-              >
-                Logout
-              </button>
+        <div className="flex items-center space-x-2">
+           <span className="text-sm text-muted-foreground">{userId}</span>
+           <div className="relative">
+             <button
+               className="p-2 rounded-full hover:bg-input transition-colors"
+               title="Account settings"
+               onClick={() => setOpen((prev) => !prev)}
+               aria-label="Open account settings"
+             >
+               <UserCircle className="h-6 w-6 text-foreground" />
+             </button>
+             {open && (
+               <div className="absolute right-0 top-full mt-2 w-40 bg-secondary border border-border rounded-lg shadow-lg z-50">
+                 <button
+                   onClick={logout}
+                   className="w-full text-left px-3 py-2 text-sm text-foreground hover:bg-border"
+                 >
+                   Logout
+                 </button>
+               </div>
+             )}
             </div>
-          )}
         </div>
       </div>
 
