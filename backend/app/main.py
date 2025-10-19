@@ -143,26 +143,6 @@ def get_current_user(token: str = Depends(oauth2_scheme)):
         raise HTTPException(status_code=401, detail="Invalid token")
     return user
 
-def get_current_user_id(token: str = Depends(oauth2_scheme)):
-    try:
-        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        email: str = payload.get("sub")
-        if email is None:
-            raise HTTPException(status_code=401, detail="Invalid token")
-    except JWTError:
-        raise HTTPException(status_code=401, detail="Invalid token")
-
-    conn = sqlite3.connect(DB_PATH)
-    conn.row_factory = sqlite3.Row
-    cursor = conn.cursor()
-    cursor.execute("SELECT * FROM users WHERE username = ?", (username,))
-    user = cursor.fetchone()
-    conn.close()
-
-    if user is None:
-        raise HTTPException(status_code=401, detail="Invalid token")
-    return user
-
 @app.get("/me", response_model=UserPublic)
 async def read_current_user(current_user: dict = Depends(get_current_user)):
     return current_user
@@ -218,8 +198,7 @@ async def post_ruleset(data: dict):
     return {"profileId": profileId, "chatlogId": chatlogId}
 
 @app.delete('/rules/{profileId}')
-async def delete_ruleset(profileId: int, current_userId: dict = Depends(get_current_user_id)):
-    userId = current_userId["username"]
+async def delete_ruleset(profileId: int):
 
     conn = None
     try:
@@ -236,9 +215,7 @@ async def delete_ruleset(profileId: int, current_userId: dict = Depends(get_curr
 
 
 @app.get('/rules/{userId}/{profileId}')
-def get_ruleset(userId: str, profileId: int, current_userId: dict = Depends(get_current_user_id)):
-    if current_userId["username"] != userId:
-        raise HTTPException(status_code=401, detail="Unauthorized access denied")
+def get_ruleset(userId: str, profileId: int):
 
     conn = None
     try:
@@ -272,9 +249,7 @@ def get_ruleset(userId: str, profileId: int, current_userId: dict = Depends(get_
             conn.close()
 
 @app.get('/profiles/{userId}')
-def get_user_profiles(userId: str, current_userId: dict = Depends(get_current_user_id)):
-    if current_userId["username"] != userId:
-        raise HTTPException(status_code=401, detail="Unauthorized access denied")
+def get_user_profiles(userId: str):
     conn = None
     try:
         conn = sqlite3.connect(DB_PATH)
@@ -357,9 +332,7 @@ def create_chat_session(data: dict):
             conn.close()
 
 @app.get('/chats/{userId}/{profileId}')
-async def get_user_chats(userId: str, profileId: int, current_userId: dict = Depends(get_current_user_id)):
-    if current_userId["username"] != userId:
-        raise HTTPException(status_code=401, detail="Unauthorized access denied")
+async def get_user_chats(userId: str, profileId: int):
 
     conn = None
     try:
@@ -475,7 +448,7 @@ async def get_chat_response(data: dict):
         with open(file_path, "r") as f:
             ruleset = json.load(f)
 
-        cursor.execute("SELECT sender, messageContent FROM messages WHERE chatlogId = ? ORDER BY messageId ASC", (chatlogId,))
+        cursor.execute("SELECT sender, messageContent FROM messages WHERE chatlogId = ? ORDER BY messageId DESC", (chatlogId,))
         history = cursor.fetchall()
 
         messages_for_llm = [{
