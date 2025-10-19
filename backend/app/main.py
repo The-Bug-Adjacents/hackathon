@@ -197,6 +197,21 @@ async def post_ruleset(data: dict):
 
     return {"profileId": profileId, "chatlogId": chatlogId}
 
+@app.delete('/rules/{profileId}')
+async def delete_ruleset(profileId: int):
+    conn = None
+    try:
+        conn = sqlite3.connect(DB_PATH)
+        cursor = conn.cursor()
+        cursor.execute("DELETE FROM model_profiles WHERE profileId = ?", (profileId,))
+        conn.commit()
+    except:
+        raise HTTPException(status_code=500, detail=f"Database error: {e}")
+    finally:
+        if conn:
+            conn.close()
+
+
 
 @app.get('/rules/{userId}/{profileId}')
 def get_ruleset(userId: str, profileId: int):
@@ -304,8 +319,26 @@ def get_user_chats(userId: str, profileId: int):
         if conn:
             conn.close()
 
-@app.get('/chats/{userId}/{profileId}/{chatlogId}/messages')
-def get_chat_messages(userId: str, profileId: int, chatlogId: int):
+@app.delete('/chats/{chatlogId}')
+def delete_chat(chatlogId: int):
+    conn = None
+
+    try:
+        conn = sqlite3.connect(DB_PATH)
+        conn.row_factory = sqlite3.Row
+        cursor = conn.cursor()
+
+        cursor.execute("DELETE FROM chat_logs WHERE chatlogId = ?", (chatlogId,))
+        conn.commit()
+        conn.close()
+    except sqlite3.Error as e:
+        raise HTTPException(status_code=500, detail=f"Database error: {e}")
+    finally:
+        if conn:
+            conn.close()
+
+@app.get('/chats/{chatlogId}')
+def get_chat_messages(chatlogId: int):
     conn = None
     try:
         conn = sqlite3.connect(DB_PATH)
@@ -313,17 +346,17 @@ def get_chat_messages(userId: str, profileId: int, chatlogId: int):
         cursor = conn.cursor()
 
         cursor.execute(
-            "SELECT chatlogId FROM chat_logs WHERE userId = ? AND profileId = ? AND chatlogId = ?",
-            (userId, profileId, chatlogId)
+            "SELECT chatlogId FROM chat_logs WHERE chatlogId = ?",
+            (chatlogId,)
         )
         if cursor.fetchone() is None:
             raise HTTPException(
                 status_code=404,
-                detail=f"Chat log with ID {chatlogId} not found for user {userId} and profile {profileId}"
+                detail=f"Chat log with ID {chatlogId} not found"
             )
 
         cursor.execute(
-            "SELECT messageId, sender, messageContent FROM messages WHERE chatlogId = ? ORDER BY messageId ASC",
+            "SELECT messageId, sender, messageContent FROM messages WHERE chatlogId = ? ORDER BY messageId DESC",
             (chatlogId,)
         )
 
