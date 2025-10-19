@@ -403,7 +403,7 @@ def get_chat_messages(userId: str, profileId: int, chatlogId: int):
 
         # 2. Fetch the messages
         cursor.execute(
-            "SELECT messageId, sender, messageContent FROM messages WHERE chatlogId = ? ORDER BY messageId DESC",
+            "SELECT messageId, sender, messageContent FROM messages WHERE chatlogId = ? ORDER BY messageId ASC",
             (chatlogId,)
         )
         messages = cursor.fetchall()
@@ -448,7 +448,7 @@ async def get_chat_response(data: dict):
         with open(file_path, "r") as f:
             ruleset = json.load(f)
 
-        cursor.execute("SELECT sender, messageContent FROM messages WHERE chatlogId = ? ORDER BY messageId DESC", (chatlogId,))
+        cursor.execute("SELECT sender, messageContent FROM messages WHERE chatlogId = ? ORDER BY messageId ASC", (chatlogId,))
         history = cursor.fetchall()
 
         messages_for_llm = [{
