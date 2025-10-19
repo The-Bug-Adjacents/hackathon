@@ -3,17 +3,10 @@ import React, { useState, useEffect } from "react";
 import {useAuth} from "../stores/authStore.jsx";
 
 export default function ChatHistoryBox({ title, activeProfileId, chats, onChatsChange, onChatsDelete, activeChat, onSelectChat, className }) {
-    const [editingId, setEditingId] = useState(null);
     const [confirmingDeleteId, setConfirmingDeleteId] = useState(null);
     const { authorizedFetch, userId } = useAuth();
 
     const handleConfirmDelete = async (idToDelete) => {
-      setConfirmingDeleteId(null);
-      if(activeChat === idToDelete){
-        onSelectChat(chats.length > 1 ? chats.find(c => c !== idToDelete) : null);
-      }
-      onChatsDelete(idToDelete)
-
      try {
     // Step 1: Send new profile to backend
     const res = await authorizedFetch(`/api/chats/${idToDelete}`, {
@@ -24,16 +17,11 @@ export default function ChatHistoryBox({ title, activeProfileId, chats, onChatsC
       throw new Error(`Failed to save profile: ${res.status}`);
     }
 
-    // Step 2: Parse backend response (which should include the real id)
-    const data = await res.json();
-
-    // Step 4: Update this component’s state
-    onChatsChange(data.chatlogId);
-
-    // Step 6: Optionally select the new profile immediately
-    if (typeof onSelectProfile === "function") {
-      onSelectChat(data.chatlogId);
-    }
+      setConfirmingDeleteId(null);
+      if(activeChat === idToDelete){
+        onSelectChat(chats.length > 1 ? chats.find(c => c !== idToDelete) : null);
+      }
+      onChatsDelete(idToDelete)
 
     } catch (error) {
     console.error("Failed to save profile:", error);
@@ -78,7 +66,7 @@ export default function ChatHistoryBox({ title, activeProfileId, chats, onChatsC
     >
       <div className="flex flex-col items-center gap-2 h-full">
         {chats.map((chat, i) => {
-          const isSelected = activeChat === chat.toString();
+          const isSelected = chat != null && (activeChat === chat.toString());
           // --- NEW: Check if this is the chat we are confirming to delete ---
           const isConfirmingDelete = confirmingDeleteId === chat;
 

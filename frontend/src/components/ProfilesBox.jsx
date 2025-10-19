@@ -139,7 +139,7 @@ export default function ProfilesBox({ profiles, activeProfile, onSelectProfile, 
                   {profile.name}
                 </span>
                 {/* optional menu */}
-                <ProfileMenu onDelete={() => {}} onEdit={() => {}} onView={() => {}} />
+                {/* <ProfileMenu onDelete={() => {}} onEdit={() => {}} onView={() => {}} /> */}
               </div>
             )}
           </div>
@@ -158,7 +158,7 @@ export default function ProfilesBox({ profiles, activeProfile, onSelectProfile, 
             </div>
           </div>
           {isHovered && (
-            <div className="flex gap-2 justify-between w-[30ch] items-center">
+            <div className="flex gap-2 justify-between w-[25ch] items-center">
               <span className="text-sm p-0 m-0 font-medium truncate leading-none align-middle">
                 Add a new profile
               </span>

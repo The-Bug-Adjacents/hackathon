@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { UserCircle } from "lucide-react";
+import { useAuth } from "../stores/authStore";
 
 
 function Box({ className = "", children }) {
@@ -14,6 +15,9 @@ export default function ChatBox({
  onSend,
  placeholder = "Type your message...",
 }) {
+  const {logout} = useAuth()
+  const [open, setOpen] = useState(false);
+
  const [input, setInput] = useState("");
  const [isSending, setIsSending] = useState(false);
  const scrollRef = useRef(null);
@@ -62,14 +66,25 @@ export default function ChatBox({
  return (
    <Box className={`flex-1 flex flex-col h-full ${className}`}>
      {/* Rounded profile/settings section aligned with all containers */}
-     <div className="mx-4 mt-4 bg-secondary border border-border rounded-2xl shadow-inner p-3 flex justify-end items-center">
+     <div className="relative mx-4 mt-4 bg-secondary border border-border rounded-2xl shadow-inner p-3 flex justify-end items-center">
        <button
          className="p-2 rounded-full hover:bg-input transition-colors"
          title="Account settings"
+         onClick={() => {setOpen((prev) => !prev)}}
          aria-label="Open account settings"
        >
          <UserCircle className="h-6 w-6 text-foreground" />
        </button>
+       {open && 
+         <div className="absolute right-0 top-full mt-2 w-40 bg-secondary border border-border rounded-lg shadow-lg z-50">
+          <button
+            onClick={logout}
+            className="w-full text-left px-3 py-2 text-sm text-foreground hover:bg-border"
+          >
+            Logout
+          </button>
+        </div>
+        }
      </div>
 
 
