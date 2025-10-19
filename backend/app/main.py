@@ -1,4 +1,4 @@
-from fastapi import FastAPI,HTTPException, status, Depends
+from fastapi import FastAPI,HTTPException, status, Depends, Body
 from fastapi.security import OAuth2PasswordBearer
 from jose import jwt, JWTError
 from pydantic import BaseModel, EmailStr
@@ -120,15 +120,17 @@ async def read_current_user(current_user: dict = Depends(get_current_user)):
     return current_user
 
 @app.post('/rules')
-def post_ruleset(data: dict):
+async def post_ruleset(data: dict):
     userId = data.get("userId")
     model = data.get("model")
+    profileName = data.get("profileName")
     ruleset = data.get("ruleset")
-    profileId = count_files_in_directory(UPLOAD_DIR)
+
 
     if not all([userId, model, ruleset]):
-        raise HTTPException(status_code=400, detail="Missing userId, model, or ruleset in request body")
+        raise HTTPException(status_code=400, detail="Missing basic userId, model, or ruleset in request body")
 
+    profileId = count_files_in_directory(str(UPLOAD_DIR))
     filename = f"{userId}_{profileId}.json"
     file_path = UPLOAD_DIR / filename
 
@@ -142,22 +144,35 @@ def post_ruleset(data: dict):
     try:
         conn = sqlite3.connect(DB_PATH)
         cursor = conn.cursor()
+
+        # --- START OF DIAGNOSTIC CHECK ---
+        # This is a final, desperate check to understand the paradox.
+        if not isinstance(profileName, str) or not profileName.strip():
+            raise HTTPException(
+                status_code=500, 
+                detail=f"DIAGNOSTIC FAILURE: The 'profileName' variable is invalid right before the database insert. This should not be possible. Value received: '{profileName}'. Type: {type(profileName)}. Please report this entire message."
+            )
+        # --- END OF DIAGNOSTIC CHECK ---
+
         cursor.execute(
-            "INSERT INTO model_profiles (userId, model, profileId) VALUES (?, ?, ?)",
-            (userId, model, profileId)
+            "INSERT INTO model_profiles (userId, profileId, profileName, model) VALUES (?, ?, ?, ?)",
+            (userId, profileId, profileName, model)
         )
         conn.commit()
     except sqlite3.Error as e:
-        os.remove(file_path) # If DB fails, remove the orphaned file
+        if os.path.exists(file_path):
+            os.remove(file_path)
+        # This is the original error you are seeing.
         raise HTTPException(status_code=500, detail=f"Database error: {e}. Ruleset file was not saved.")
     finally:
         if conn:
             conn.close()
 
-    chat_session_data = create_chat_session(userId = userId, profileId = profileId)
+    chat_session_data = create_chat_session({"userId": userId, "profileId": profileId})
     chatlogId = chat_session_data["chatlogId"]
 
     return {"profileId": profileId, "chatlogId": chatlogId}
+
 
 @app.get('/rules/{userId}/{profileId}')
 def get_ruleset(userId: str, profileId: int):
@@ -201,12 +216,12 @@ def get_user_profiles(userId: str):
         cursor = conn.cursor()
 
         cursor.execute(
-            "SELECT profileId FROM model_profiles WHERE userId = ?",
+            "SELECT profileId, profileName FROM model_profiles WHERE userId = ?",
             (userId,)
         )
 
         profiles = cursor.fetchall()
-        return {"profileIds": [row["profileId"] for row in profiles]}
+        return {"profiles": [dict(row) for row in profiles]}
 
     except sqlite3.Error as e:
         raise HTTPException(status_code=500, detail=f"Database error: {e}")
@@ -214,8 +229,10 @@ def get_user_profiles(userId: str):
         if conn:
             conn.close()
 
-@app.post('/chats/{userId}/{profileId}')
-def create_chat_session(userId: str, profileId: int):
+@app.post('/chats')
+def create_chat_session(data: dict):
+    userId = data.get("userId")
+    profileId = data.get("profileId")
 
     if not all([userId, profileId is not None]):
         raise HTTPException(status_code=400, detail="Missing userId or profileId in request body")
@@ -231,7 +248,7 @@ def create_chat_session(userId: str, profileId: int):
 
         cursor.execute("INSERT INTO chat_logs (userId, profileId) VALUES (?, ?)", (userId, profileId))
         conn.commit()
-
+        
         new_chatlogId = cursor.lastrowid
         return {"chatlogId": new_chatlogId}
 
@@ -271,7 +288,6 @@ def get_chat_messages(userId: str, profileId: int, chatlogId: int):
         conn.row_factory = sqlite3.Row
         cursor = conn.cursor()
 
-        # 1. Verify that the chat log belongs to the user and profile
         cursor.execute(
             "SELECT chatlogId FROM chat_logs WHERE userId = ? AND profileId = ? AND chatlogId = ?",
             (userId, profileId, chatlogId)
@@ -282,7 +298,6 @@ def get_chat_messages(userId: str, profileId: int, chatlogId: int):
                 detail=f"Chat log with ID {chatlogId} not found for user {userId} and profile {profileId}"
             )
 
-        # 2. Fetch the messages if verification is successful
         cursor.execute(
             "SELECT messageId, sender, messageContent FROM messages WHERE chatlogId = ? ORDER BY messageId ASC",
             (chatlogId,)
@@ -310,7 +325,6 @@ async def get_chat_response(data: dict):
         conn.row_factory = sqlite3.Row
         cursor = conn.cursor()
 
-        # 1. Get chat info, model, and ruleset
         cursor.execute("""
             SELECT cl.userId, cl.profileId, mp.model 
             FROM chat_logs cl JOIN model_profiles mp ON cl.userId = mp.userId AND cl.profileId = mp.profileId
@@ -329,11 +343,9 @@ async def get_chat_response(data: dict):
         with open(file_path, "r") as f:
             ruleset = json.load(f)
 
-        # 2. Get message history
         cursor.execute("SELECT sender, messageContent FROM messages WHERE chatlogId = ? ORDER BY messageId ASC", (chatlogId,))
         history = cursor.fetchall()
 
-        # 3. Build messages for LLM
         messages_for_llm = [{
             "role": "system",
             "content": f"You must strictly follow these rules: {json.dumps(ruleset)}"
@@ -343,7 +355,6 @@ async def get_chat_response(data: dict):
             messages_for_llm.append({"role": role, "content": message["messageContent"]})
         messages_for_llm.append({"role": "user", "content": prompt})
 
-        # 4. Call LLM
         llm_response = client.chat.completions.create(
             model=model,
             messages=messages_for_llm,
@@ -353,7 +364,6 @@ async def get_chat_response(data: dict):
         )
         response_content = llm_response.choices[0].message.content
 
-        # 5. Save new messages to DB
         cursor.execute("SELECT MAX(messageId) FROM messages WHERE chatlogId = ?", (chatlogId,))
         max_id = cursor.fetchone()[0]
         user_messageId = (max_id + 1) if max_id is not None else 0

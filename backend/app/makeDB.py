@@ -1,7 +1,10 @@
 import sqlite3
 
 def create_database():
-    """Creates and initializes the SQLite database and handles schema updates."""
+
+
+
+    """Creates and initializes the SQLite database. This version allows NULL for profileName for diagnostic purposes."""
     conn = None
     try:
         conn = sqlite3.connect('database.db')
@@ -15,7 +18,7 @@ def create_database():
         cursor.execute("DROP TABLE IF EXISTS users")
 
         # --- Create Tables with Correct Schema ---
-        print("Creating new tables with correct schema...")
+        print("Creating new tables with diagnostic schema...")
         cursor.execute('''
             CREATE TABLE IF NOT EXISTS users (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -25,13 +28,13 @@ def create_database():
             )
         ''')
 
-        # userId is now correctly defined as TEXT
+        # --- DIAGNOSTIC CHANGE: profileName is now allowed to be NULL ---
         cursor.execute('''
             CREATE TABLE IF NOT EXISTS model_profiles (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                userId TEXT NOT NULL, 
-                model TEXT NOT NULL,
+                userId TEXT NOT NULL,
                 profileId INTEGER NOT NULL,
+                profileName TEXT NOT NULL, -- Temporarily allowing NULL to diagnose the issue
+                model TEXT NOT NULL,
                 UNIQUE (userId, profileId)
             )
         ''')
@@ -57,7 +60,7 @@ def create_database():
         ''')
 
         conn.commit()
-        print("Database schema is now up to date.")
+        print("Database schema has been updated for diagnostics.")
 
     except sqlite3.Error as e:
         print(f"Database error: {e}")
