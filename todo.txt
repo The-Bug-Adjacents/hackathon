@@ -1,0 +1,16 @@
+Mark you name next to the sections you will do/are doing to claim:
+Add the check emoji next to completed sections ✅
+Add the warning emoji for section ins progress⚠️
+
+**IMPORTANT**
+CONNECT AN LLM!!!!!!
+This must be completed ASAP, otherwise the app can only pointless.
+
+High - Token Authorization (Add protection to FastAPI Endpoints)
+High - Implement Markdown Responses
+High - Profile Update and Delete
+Medium - Chat Names (Add to database)
+Medium - Add Stripe Payments for subscription (MAKE ADMIN ACCOUNTS THAT DON'T NEED PAYMENT!!!)
+Medium - Image Upload/Interpretation
+Low - Google Sign-In (Using python OAuth2)
+Low - Expand Profile Use Cases
