@@ -10,7 +10,7 @@ Add the warning emoji for section ins progress⚠️
 
 ✅ - High - Token Authorization (Add protection to FastAPI Endpoints) Cail
 High - Implement Markdown Responses
-High - Profile Update and Delete
+High - Profile/Chat Update and Delete
 High - Connect to 3rd-party Database (Maybe MongoDB?)
 Medium - Chat Names (Add to database)
 Medium - Add Stripe Payments for subscription (MAKE ADMIN ACCOUNTS THAT DON'T NEED PAYMENT!!!)
