@@ -2,14 +2,16 @@ Mark you name next to the sections you will do/are doing to claim:
 Add the check emoji next to completed sections ✅
 Add the warning emoji for section ins progress⚠️
 
-**IMPORTANT**
-CONNECT AN LLM!!!!!!
-This must be completed ASAP, otherwise the app can only pointless.
+ ̶*̶*̶I̶M̶P̶O̶R̶T̶A̶N̶T̶*̶*̶
+̶C̶O̶N̶N̶E̶C̶T̶ ̶A̶N̶ ̶L̶L̶M̶!̶!̶!̶!̶!̶!̶
+̶T̶h̶i̶s̶ ̶m̶u̶s̶t̶ ̶b̶e̶ ̶c̶o̶m̶p̶l̶e̶t̶e̶d̶ ̶A̶S̶A̶P̶,̶ ̶o̶t̶h̶e̶r̶w̶i̶s̶e̶ ̶t̶h̶e̶ ̶a̶p̶p̶ ̶c̶a̶n̶ ̶o̶n̶l̶y̶ ̶p̶o̶i̶n̶t̶l̶e̶s̶s̶.̶
 
-High - Token Authorization (Add protection to FastAPI Endpoints)
+!!!We now use gemini, either generate a new api code from: aistudio.google.com or ask Cail for his
+
+✅ - High - Token Authorization (Add protection to FastAPI Endpoints) Cail
 High - Implement Markdown Responses
 High - Profile Update and Delete
-High - Connect to 3rd-party Datbase (Maybe MongoDB?)
+High - Connect to 3rd-party Database (Maybe MongoDB?)
 Medium - Chat Names (Add to database)
 Medium - Add Stripe Payments for subscription (MAKE ADMIN ACCOUNTS THAT DON'T NEED PAYMENT!!!)
 Medium - Image Upload/Interpretation

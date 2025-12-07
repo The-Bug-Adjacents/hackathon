@@ -198,7 +198,7 @@ async def post_ruleset(data: dict):
     return {"profileId": profileId, "chatlogId": chatlogId}
 
 @app.delete('/rules/{profileId}')
-async def delete_ruleset(profileId: int):
+async def delete_ruleset(profileId: int, current_user: User = Depends(get_current_user)):
 
     conn = None
     try:
@@ -215,7 +215,7 @@ async def delete_ruleset(profileId: int):
 
 
 @app.get('/rules/{userId}/{profileId}')
-def get_ruleset(userId: str, profileId: int):
+def get_ruleset(userId: str, profileId: int, current_user: User = Depends(get_current_user)):
 
     conn = None
     try:
@@ -249,7 +249,7 @@ def get_ruleset(userId: str, profileId: int):
             conn.close()
 
 @app.get('/profiles/{userId}')
-def get_user_profiles(userId: str):
+def get_user_profiles(userId: str, current_user: User = Depends(get_current_user)):
     conn = None
     try:
         conn = sqlite3.connect(DB_PATH)
@@ -271,7 +271,7 @@ def get_user_profiles(userId: str):
             conn.close()
 
 @app.delete('profiles/{userId}/{profileId}')
-def delete_user_profile(userId: str, profileId: int):
+def delete_user_profile(userId: str, profileId: int, current_user: User = Depends(get_current_user)):
     conn = None
     try:
         conn = sqlite3.connect(DB_PATH)
@@ -332,7 +332,7 @@ def create_chat_session(data: dict):
             conn.close()
 
 @app.get('/chats/{userId}/{profileId}')
-async def get_user_chats(userId: str, profileId: int):
+async def get_user_chats(userId: str, profileId: int, current_user: User = Depends(get_current_user)):
 
     conn = None
     try:
@@ -355,7 +355,7 @@ async def get_user_chats(userId: str, profileId: int):
             conn.close()
 
 @app.delete('/chats/{chatlogId}')
-def delete_chat(chatlogId: int):
+def delete_chat(chatlogId: int, current_user: User = Depends(get_current_user)):
     conn = None
     try:
         conn = sqlite3.connect(DB_PATH)
@@ -377,7 +377,7 @@ def delete_chat(chatlogId: int):
             conn.close()
 
 @app.get('/chats/{userId}/{profileId}/{chatlogId}/messages')
-def get_chat_messages(userId: str, profileId: int, chatlogId: int):
+def get_chat_messages(userId: str, profileId: int, chatlogId: int, current_user: User = Depends(get_current_user)):
     conn = None
     try:
         conn = sqlite3.connect(DB_PATH)
