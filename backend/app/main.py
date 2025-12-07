@@ -4,7 +4,7 @@ from jose import jwt, JWTError
 from pydantic import BaseModel, EmailStr
 from passlib.context import CryptContext
 from datetime import datetime, timedelta
-from kronoslabs import KronosLabs
+import google.generativeai as genai
 from dotenv import load_dotenv
 import os
 import json
@@ -18,7 +18,7 @@ api_key = os.getenv("API_KEY")
 if api_key is None:
     raise ValueError("API_KEY environment variable not set")
 
-client = KronosLabs(api_key=api_key)
+genai.configure(api_key=api_key)
 
 # Define an absolute path to the 'rulesets' directory and database
 APP_ROOT = Path(__file__).parent.resolve()
@@ -439,7 +439,7 @@ async def get_chat_response(data: dict):
         if not chat_data:
             raise HTTPException(status_code=404, detail=f"Chat log with ID {chatlogId} not found")
 
-        userId, profileId, model = chat_data["userId"], chat_data["profileId"], chat_data["model"]
+        userId, profileId, model_name = chat_data["userId"], chat_data["profileId"], chat_data["model"]
 
         filename = f"{userId}_{profileId}.json"
         file_path = UPLOAD_DIR / filename
@@ -447,27 +447,40 @@ async def get_chat_response(data: dict):
             raise HTTPException(status_code=404, detail=f"Ruleset file not found: {filename}")
         with open(file_path, "r") as f:
             ruleset = json.load(f)
+        
+        system_prompt = f"You must strictly follow these rules: {json.dumps(ruleset)}"
 
         cursor.execute("SELECT sender, messageContent FROM messages WHERE chatlogId = ? ORDER BY messageId ASC", (chatlogId,))
         history = cursor.fetchall()
 
-        messages_for_llm = [{
-            "role": "system",
-            "content": f"You must strictly follow these rules: {json.dumps(ruleset)}"
-        }]
-        for message in history:
-            role = "assistant" if message["sender"] == "llm" else "user"
-            messages_for_llm.append({"role": role, "content": message["messageContent"]})
-        messages_for_llm.append({"role": "user", "content": prompt})
-
-        llm_response = client.chat.completions.create(
-            model=model,
-            messages=messages_for_llm,
-            prompt=prompt,
-            temperature=0.2,
-            is_stream=False
+        llm = genai.GenerativeModel(
+            model_name="gemini-2.5-flash",
+            system_instruction=system_prompt,
+            generation_config={"temperature": 0.2}
         )
-        response_content = llm_response.choices[0].message.content
+
+        chat_history_for_model = []
+        for message in history:
+            role = "model" if message["sender"] == "llm" else "user"
+            chat_history_for_model.append({"role": role, "parts": [message["messageContent"]]})
+        
+        chat_session = llm.start_chat(history=chat_history_for_model)
+
+        try:
+            llm_response = chat_session.send_message(prompt)
+            try:
+                response_content = llm_response.text
+            except ValueError as e:
+                # This can happen if the response is blocked due to safety settings or other reasons.
+                finish_reason = "Unknown"
+                if llm_response.candidates and llm_response.candidates[0].finish_reason:
+                    finish_reason = llm_response.candidates[0].finish_reason.name
+                raise HTTPException(
+                    status_code=400, 
+                    detail=f"API response was blocked or empty. Finish Reason: {finish_reason}. Error: {e}"
+                )
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=f"Failed to get response from LLM: {e}")
 
         cursor.execute("SELECT MAX(messageId) FROM messages WHERE chatlogId = ?", (chatlogId,))
         max_id = cursor.fetchone()[0]
@@ -491,6 +504,8 @@ async def get_chat_response(data: dict):
         raise HTTPException(status_code=500, detail=f"Database error: {e}")
     except (IOError, json.JSONDecodeError) as e:
         raise HTTPException(status_code=500, detail=f"Error reading or parsing ruleset file: {e}")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"An unexpected error occurred: {e}")
     finally:
         if conn:
             conn.close()

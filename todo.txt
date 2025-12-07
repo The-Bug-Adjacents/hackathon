@@ -9,6 +9,7 @@ This must be completed ASAP, otherwise the app can only pointless.
 High - Token Authorization (Add protection to FastAPI Endpoints)
 High - Implement Markdown Responses
 High - Profile Update and Delete
+High - Connect to 3rd-party Datbase (Maybe MongoDB?)
 Medium - Chat Names (Add to database)
 Medium - Add Stripe Payments for subscription (MAKE ADMIN ACCOUNTS THAT DON'T NEED PAYMENT!!!)
 Medium - Image Upload/Interpretation
